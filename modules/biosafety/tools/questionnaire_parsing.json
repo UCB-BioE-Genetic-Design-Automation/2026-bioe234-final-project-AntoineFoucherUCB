@@ -3,12 +3,10 @@
   "name": "Questionnaire Parser",
   "description": "Transforms raw user interview answers into structured objects for the BUA form.",
   "type": "function",
-  "keywords": [
-    "data mapping",
-    "BUA",
-    "parsing",
-    "schema"
-  ],
+  "keywords": ["data mapping", "BUA", "parsing", "schema"],
+  "date_created": "2026-04-16T00:00:00Z",
+  "date_last_modified": "2026-04-16T00:00:00Z",
+
   "inputs": [
     {
       "name": "raw_answers",
@@ -16,15 +14,39 @@
       "description": "JSON string containing 'lab_identity' and 'strains'."
     }
   ],
+
   "outputs": [
     {
       "type": "object",
       "description": "Structured dictionary containing the validated BUA data objects."
     }
   ],
+
+  "examples": [
+    {
+      "input": {
+        "raw_answers": "{\"lab_identity\": {\"pi_name\": \"Jane Smith\", \"department\": \"MCB\", \"room\": \"Stanley Hall B144\"}, \"strains\": [{\"name\": \"HIV-1 lentiviral vector\", \"source\": \"Addgene\"}]}"
+      },
+      "output": {
+        "lab_identity": {
+          "pi_name": "Jane Smith",
+          "department": "MCB",
+          "room": "Stanley Hall B144"
+        },
+        "strains": [
+          {
+            "name": "HIV-1 lentiviral vector",
+            "source": "Addgene"
+          }
+        ]
+      }
+    }
+  ],
+
   "execution_details": {
     "language": "Python",
-    "class_name": "QuestionnaireParsing",
-    "module": "modules.biosafety.tools.questionnaire_parsing"
+    "source": "modules/biosafety/tools/questionnaire_parsing.py",
+    "initialization": "initiate",
+    "execution": "run"
   }
 }

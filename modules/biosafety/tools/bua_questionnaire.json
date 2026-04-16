@@ -4,8 +4,8 @@
   "description": "Retrieves structured questionnaire sections for generating a Biological Use Authorization (BUA). Includes specialized modules for Lentivirus and Recombinant DNA based on user materials.",
   "type": "function",
   "keywords": ["biosafety", "BUA", "questionnaire", "lentivirus", "recombinant DNA", "compliance"],
-  "date_created": "2026-04-16",
-  "date_last_modified": "2026-04-16",
+  "date_created": "2026-04-16T00:00:00Z",
+  "date_last_modified": "2026-04-16T00:00:00Z",
 
   "inputs": [
     {
@@ -16,15 +16,13 @@
     {
       "name": "section",
       "type": "string",
-      "description": "Required if method is 'get_questions'. Valid sections: 'identity', 'scope', 'materials', 'recombinant', 'lentivirus', 'safety'.",
-      "default": null
+      "description": "Required if method is 'get_questions'. Valid sections: 'identity', 'scope', 'materials', 'recombinant', 'lentivirus', 'safety'."
     }
   ],
 
   "outputs": [
     {
       "type": "array",
-      "items": { "type": "string" },
       "description": "A list of strings representing the questions for the requested section."
     }
   ],
@@ -32,7 +30,7 @@
   "examples": [
     {
       "input": { "method": "get_initial_questions" },
-      "output": { 
+      "output": {
         "result": [
           "What is the Principal Investigator's (PI) full name and email?",
           "Which department is overseeing this research?",
@@ -44,26 +42,27 @@
           "List all biological agents (bacteria, viruses, fungi, parasites) or cell lines (human/primate).",
           "For each, what is the scientific name and the source (e.g., ATCC, another lab)?",
           "Are any of these materials considered Dual Use Research of Concern (DURC)?"
-        ] 
+        ]
       }
     },
     {
       "input": { "method": "get_questions", "section": "lentivirus" },
-      "output": { 
+      "output": {
         "result": [
           "How many plasmids are used to generate virions (3-4 vs 2 or fewer)?",
           "Does the vector use self-inactivating (SIN) LTRs?",
           "What is the transgene function (Low risk/GFP vs High risk/Oncogene)?",
           "Will the viruses be concentrated?",
           "What percentage of the viral genome is deleted or substituted?"
-        ] 
+        ]
       }
     }
   ],
 
   "execution_details": {
     "language": "Python",
-    "class_name": "BUAQuestionnaire",
-    "module": "modules.biosafety.tools.bua_questionnaire"
+    "source": "modules/biosafety/tools/bua_questionnaire.py",
+    "initialization": "initiate",
+    "execution": "run"
   }
 }
