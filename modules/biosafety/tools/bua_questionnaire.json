@@ -1,0 +1,69 @@
+{
+  "id": "org.biosafety.function.bua_questionnaire.v1",
+  "name": "BUA Questionnaire Provider",
+  "description": "Retrieves structured questionnaire sections for generating a Biological Use Authorization (BUA). Includes specialized modules for Lentivirus and Recombinant DNA based on user materials.",
+  "type": "function",
+  "keywords": ["biosafety", "BUA", "questionnaire", "lentivirus", "recombinant DNA", "compliance"],
+  "date_created": "2026-04-16",
+  "date_last_modified": "2026-04-16",
+
+  "inputs": [
+    {
+      "name": "method",
+      "type": "string",
+      "description": "The specific tool method to call: 'get_initial_questions' for starting the interview, or 'get_questions' for specific modules."
+    },
+    {
+      "name": "section",
+      "type": "string",
+      "description": "Required if method is 'get_questions'. Valid sections: 'identity', 'scope', 'materials', 'recombinant', 'lentivirus', 'safety'.",
+      "default": null
+    }
+  ],
+
+  "outputs": [
+    {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "A list of strings representing the questions for the requested section."
+    }
+  ],
+
+  "examples": [
+    {
+      "input": { "method": "get_initial_questions" },
+      "output": { 
+        "result": [
+          "What is the Principal Investigator's (PI) full name and email?",
+          "Which department is overseeing this research?",
+          "List the building(s) and room number(s) where the work will occur (e.g., Stanley Hall B144).",
+          "List all personnel (Name and Role) who will have access to these materials.",
+          "What is the title of this research project?",
+          "Provide a brief abstract/objective of the research.",
+          "Briefly describe the laboratory procedures involving biological materials.",
+          "List all biological agents (bacteria, viruses, fungi, parasites) or cell lines (human/primate).",
+          "For each, what is the scientific name and the source (e.g., ATCC, another lab)?",
+          "Are any of these materials considered Dual Use Research of Concern (DURC)?"
+        ] 
+      }
+    },
+    {
+      "input": { "method": "get_questions", "section": "lentivirus" },
+      "output": { 
+        "result": [
+          "How many plasmids are used to generate virions (3-4 vs 2 or fewer)?",
+          "Does the vector use self-inactivating (SIN) LTRs?",
+          "What is the transgene function (Low risk/GFP vs High risk/Oncogene)?",
+          "Will the viruses be concentrated?",
+          "What percentage of the viral genome is deleted or substituted?"
+        ] 
+      }
+    }
+  ],
+
+  "execution_details": {
+    "language": "Python",
+    "class_name": "BUAQuestionnaire",
+    "module": "modules.biosafety.tools.bua_questionnaire"
+  }
+}

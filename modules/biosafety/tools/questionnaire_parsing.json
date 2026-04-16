@@ -1,0 +1,30 @@
+{
+  "id": "org.biosafety.function.questionnaire_parsing.v1",
+  "name": "Questionnaire Parser",
+  "description": "Transforms raw user interview answers into structured objects for the BUA form.",
+  "type": "function",
+  "keywords": [
+    "data mapping",
+    "BUA",
+    "parsing",
+    "schema"
+  ],
+  "inputs": [
+    {
+      "name": "raw_answers",
+      "type": "string",
+      "description": "JSON string containing 'lab_identity' and 'strains'."
+    }
+  ],
+  "outputs": [
+    {
+      "type": "object",
+      "description": "Structured dictionary containing the validated BUA data objects."
+    }
+  ],
+  "execution_details": {
+    "language": "Python",
+    "class_name": "QuestionnaireParsing",
+    "module": "modules.biosafety.tools.questionnaire_parsing"
+  }
+}

@@ -1,0 +1,40 @@
+[
+  {
+    "prompt": "I want to start a new BUA for my lab.",
+    "expected_tool": "get_initial_questions",
+    "expected_args": {},
+    "notes": "Triggers the start of the BUA interview process."
+  },
+  {
+    "prompt": "What are the specific questions for working with Lentivirus?",
+    "expected_tool": "get_questions",
+    "expected_args": {
+      "section": "lentivirus"
+    },
+    "notes": "Direct request for the viral vector safety module."
+  },
+  {
+    "prompt": "Give me the questions for recombinant DNA work.",
+    "expected_tool": "get_questions",
+    "expected_args": {
+      "section": "recombinant"
+    },
+    "notes": "Direct request for the recombinant DNA module."
+  },
+  {
+    "prompt": "I'm finished with the interview. Here is the summary: PI is John Doe in FItzgerald U234. I'm using E. coli BL21 and 3rd gen Lentivirus expressing GFP.",
+    "expected_tool": "questionnaire_parsing",
+    "expected_args": {
+      "raw_answers": "{\"lab_identity\": {\"pi_name\": \"John Doe\", \"rooms\": [\"FItzgerald U234\"]}, \"strains\": [{\"scientific_name\": \"E. coli BL21\", \"is_recombinant\": true}, {\"scientific_name\": \"Lentivirus\", \"is_lentivirus\": true, \"transgenes\": [\"GFP\"]}]}"
+    },
+    "notes": "The agent summarizes the conversation into the JSON format required by the parser."
+  },
+  {
+    "prompt": "What are the standard safety practices for BSL-2 work?",
+    "expected_tool": "get_questions",
+    "expected_args": {
+      "section": "safety"
+    },
+    "notes": "Triggers the safety and decontamination module."
+  }
+]

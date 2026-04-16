@@ -1,11 +1,11 @@
-"""This module auto-discovers every sub-package inside modules/ (like seq_basics,
+"""This module auto-discovers every sub-package inside modules/ (like biosafety,
 crispr, cloning) and registers their tools and resources with the MCP server.
  
 To add a new module:
     1. Create  modules/<your_module>/
     2. Add     modules/<your_module>/tools/    ← your .py tool files go here
     3. Add     modules/<your_module>/data/     ← your .gb / .fasta files go here
-    4. Follow the same __init__.py / SKILL.md / _utils.py conventions as seq_basics
+    4. Follow the same __init__.py / SKILL.md / _utils.py conventions as biosafety
     register_all() will pick it up automatically on next server restart.
 """
 
@@ -14,7 +14,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from modules.seq_basics._plumbing.register import register_tools, register_resources
+from modules.biosafety._plumbing.register import register_tools, register_resources
 
 def register_all(mcp) -> None:
     """
