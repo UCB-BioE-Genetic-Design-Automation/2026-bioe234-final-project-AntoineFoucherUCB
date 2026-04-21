@@ -27,7 +27,7 @@
     "expected_args": {
       "raw_answers": "{\"lab_identity\": {\"pi_name\": \"John Doe\", \"rooms\": [\"FItzgerald U234\"]}, \"strains\": [{\"scientific_name\": \"E. coli BL21\", \"is_recombinant\": true}, {\"scientific_name\": \"Lentivirus\", \"is_lentivirus\": true, \"transgenes\": [\"GFP\"]}]}"
     },
-    "notes": "The agent summarizes the conversation into the JSON format required by the parser."
+    "notes": "Basic summary mapped to the JSON parser."
   },
   {
     "prompt": "What are the standard safety practices for BSL-2 work?",
@@ -36,5 +36,29 @@
       "section": "safety"
     },
     "notes": "Triggers the safety and decontamination module."
+  },
+  {
+    "prompt": "Can you check the standard institutional biosafety practices for liquid waste and PPE?",
+    "expected_tool": "bua_resource_reader",
+    "expected_args": {
+      "document_key": "safety"
+    },
+    "notes": "Triggers the reader to extract standard safety protocols."
+  },
+  {
+    "prompt": "I need to look up the exposure control plan details for my Lentivirus work.",
+    "expected_tool": "bua_resource_reader",
+    "expected_args": {
+      "document_key": "lentivirus"
+    },
+    "notes": "Triggers the reader to extract the Lentivirus ECP."
+  },
+  {
+    "prompt": "We are done. PI is Jane Smith in Stanley B144. We are using HIV-1 lentiviral vector (3-4 plasmids, SIN LTRs, low risk GFP) and our safety protocols include 10% bleach and lab coats.",
+    "expected_tool": "questionnaire_parsing",
+    "expected_args": {
+      "raw_answers": "{\"lab_identity\": {\"pi_name\": \"Jane Smith\", \"rooms\": [\"Stanley B144\"], \"safety_protocols\": {\"ppe\": \"Lab coats\", \"liquid_waste\": \"10% bleach\"}}, \"strains\": [{\"scientific_name\": \"HIV-1 lentiviral vector\", \"is_lentivirus\": true, \"lentivirus_details\": {\"num_plasmids\": \"3-4 plasmids\", \"sin_ltrs\": true, \"transgene_risk\": \"Low risk (GFP)\"}}]}"
+    },
+    "notes": "Complex summary triggering the parser with nested safety and lentivirus details based on the expanded schema."
   }
 ]

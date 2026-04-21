@@ -17,9 +17,15 @@ from dotenv import load_dotenv
 from fastmcp import Client
 from google import genai
 from google.genai import types, errors
+import mcp
 
 # Helpers: skill context + system prompt
 # ---------------------------------------------------------------------------
+def _sanitize_tool_name(name: str) -> str:
+    """Replace spaces and invalid chars with underscores for Gemini compatibility."""
+    import re
+    return re.sub(r"[^a-zA-Z0-9_.\-:]", "_", name)
+
 def _load_skill_context(modules_dir: Path) -> str:
     """Load SKILL.md files from all modules and combine them."""
     skill_texts = []
@@ -89,13 +95,15 @@ def _build_system_content(mcp_tools, mcp_resources, skill_context: str = "") -> 
     )
  
  
-def _mcp_tool_to_fn_declaration(tool: Any) -> types.FunctionDeclaration:
+def _mcp_tool_to_fn_declaration(tool: Any, name_map: Dict[str, str]) -> types.FunctionDeclaration:
     """Convert a FastMCP tool definition into a Gemini FunctionDeclaration."""
     params: Dict[str, Any] = getattr(tool, "inputSchema", None) or {"type": "object", "properties": {}}
     params = _strip_ctx_from_schema(params)
     desc = (getattr(tool, "description", None) or "").strip() or f"MCP tool: {tool.name}"
+    safe_name = _sanitize_tool_name(tool.name)
+    name_map[safe_name] = tool.name  # map sanitized → original
     return types.FunctionDeclaration(
-        name=tool.name,
+        name=safe_name,
         description=desc,
         parameters_json_schema=params,
     )
@@ -134,6 +142,7 @@ async def _run_tool_loop(
     safe_generate_fn,
     model: str,
     config,
+    tool_name_map: Dict[str, str] = {},   
 ) -> tuple[str | None, List[types.Content]]:
     """Execute tool calls until Gemini produces a plain-text reply.
  
@@ -182,12 +191,13 @@ async def _run_tool_loop(
         for fc in function_calls:
             tool_name = fc.name
             tool_args = dict(fc.args or {})
+            original_tool_name = tool_name_map.get(tool_name, tool_name) 
  
             print(f"\n[Tool call] → {tool_name}")
             print(json.dumps(tool_args, indent=2))
  
             try:
-                tool_result = await mcp.call_tool(tool_name, tool_args)
+                tool_result = await mcp.call_tool(original_tool_name, tool_args)
                 # Safely extract text from whatever FastMCP returns
                 if isinstance(tool_result, list):
                     result_data = "\n".join(
@@ -299,7 +309,8 @@ async def run_chat() -> None:
         mcp_resources = await mcp.list_resources()
         mcp_prompts = await mcp.list_prompts()
 
-        fn_decls = [_mcp_tool_to_fn_declaration(t) for t in mcp_tools]
+        tool_name_map: Dict[str, str] = {}
+        fn_decls = [_mcp_tool_to_fn_declaration(t, tool_name_map) for t in mcp_tools]
         if fn_decls:
             tool_obj = types.Tool(function_declarations=fn_decls)
             config = types.GenerateContentConfig(tools=[tool_obj])
@@ -413,7 +424,7 @@ async def run_chat() -> None:
                     initial_contents = [system_content, *prompt_contents]
                     resp = safe_generate(model=model, contents=initial_contents, config=config)
 
-                    await _run_tool_loop(mcp, resp, initial_contents, safe_generate, model, config)
+                    await _run_tool_loop(mcp, resp, initial_contents, safe_generate, model, config, tool_name_map)
 
                 else:
                     print("\nUnknown command. Type /help\n")
@@ -436,7 +447,7 @@ async def run_chat() -> None:
  
             # use shared tool loop helper (no duplication)
             _final_text, updated_contents = await _run_tool_loop(
-                mcp, resp, current_contents, safe_generate, model, config
+                mcp, resp, current_contents, safe_generate, model, config, tool_name_map
             )
  
             # sync history: everything appended beyond current_contents
