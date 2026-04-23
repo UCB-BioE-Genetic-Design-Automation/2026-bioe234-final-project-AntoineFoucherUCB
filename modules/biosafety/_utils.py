@@ -1,39 +1,47 @@
-"""Shared constants and utilities for seq_basics tools.
-
-This file contains constants (like the codon table) that multiple tools use.
-Students can add additional shared utilities here.
+"""Utilities like RAG markdown conversion
 """
 
-from __future__ import annotations
+import os
+import logging
 
-# Standard genetic code (DNA codons -> amino acids)
-CODON_TABLE = {
-    "TTT": "F", "TTC": "F", "TTA": "L", "TTG": "L",
-    "CTT": "L", "CTC": "L", "CTA": "L", "CTG": "L",
-    "ATT": "I", "ATC": "I", "ATA": "I", "ATG": "M",
-    "GTT": "V", "GTC": "V", "GTA": "V", "GTG": "V",
-    "TCT": "S", "TCC": "S", "TCA": "S", "TCG": "S",
-    "CCT": "P", "CCC": "P", "CCA": "P", "CCG": "P",
-    "ACT": "T", "ACC": "T", "ACA": "T", "ACG": "T",
-    "GCT": "A", "GCC": "A", "GCA": "A", "GCG": "A",
-    "TAT": "Y", "TAC": "Y", "TAA": "*", "TAG": "*",
-    "CAT": "H", "CAC": "H", "CAA": "Q", "CAG": "Q",
-    "AAT": "N", "AAC": "N", "AAA": "K", "AAG": "K",
-    "GAT": "D", "GAC": "D", "GAA": "E", "GAG": "E",
-    "TGT": "C", "TGC": "C", "TGA": "*", "TGG": "W",
-    "CGT": "R", "CGC": "R", "CGA": "R", "CGG": "R",
-    "AGT": "S", "AGC": "S", "AGA": "R", "AGG": "R",
-    "GGT": "G", "GGC": "G", "GGA": "G", "GGG": "G",
-}
+def convert_to_markdown(file_path: str) -> str:
+    """
+    Reads a document of various types and converts its text to Markdown.
+    """
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"Document not found at path: {file_path}")
 
-# Valid sequence characters (DNA/RNA + IUPAC ambiguity codes)
-# A, T, C, G = standard DNA bases
-# U = RNA uracil
-# R = A or G (purine)
-# Y = C or T (pyrimidine)
-# S = G or C (strong)
-# W = A or T (weak)
-# K = G or T (keto)
-# M = A or C (amino)
-# N = any base
-VALID_SEQUENCE_CHARS = set("ATUCGRSYKWMN")
+    ext = os.path.splitext(file_path)[1].lower()
+
+    try:
+        if ext in ['.txt', '.md', '.json', '.csv']:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                return f.read()
+                
+        elif ext == '.pdf':
+            # Requires: pip install pymupdf
+            import fitz 
+            text = f"## Document: {os.path.basename(file_path)}\n\n"
+            doc = fitz.open(file_path)
+            for page in doc:
+                text += page.get_text() + "\n\n"
+            return text
+            
+        elif ext == '.docx':
+            # Requires: pip install python-docx
+            import docx
+            doc = docx.Document(file_path)
+            text = f"## Document: {os.path.basename(file_path)}\n\n"
+            for para in doc.paragraphs:
+                text += para.text + "\n\n"
+            return text
+            
+        else:
+            raise ValueError(f"Unsupported file extension: {ext}")
+            
+    except ImportError as e:
+        logging.error(f"Missing library for parsing {ext} files: {e}")
+        return f"Error: Missing required library to parse {ext} files. Please install it."
+    except Exception as e:
+        logging.error(f"Error parsing document: {e}")
+        raise

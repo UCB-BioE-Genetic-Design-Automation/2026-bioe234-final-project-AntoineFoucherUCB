@@ -1,50 +1,41 @@
 {
-  "id": "org.biosafety.function.questionnaire_parsing.v1",
-  "name": "Questionnaire Parser",
-  "description": "Transforms raw user interview answers into structured objects for the BUA form.",
+  "id": "org.c9.function.biosafety.bua.questionnaire_parsing.v1",
+  "name": "BUA Questionnaire Data Parser",
+  "description": "Takes JSON data extracted by the LLM from the user, validates it against Pydantic models, and updates the global BUA_data_structure.",
   "type": "function",
-  "keywords": ["data mapping", "BUA", "parsing", "schema"],
-  "date_created": "2026-04-16T00:00:00Z",
-  "date_last_modified": "2026-04-16T00:00:00Z",
-
+  "keywords": ["biosafety", "bua", "parser", "pydantic", "state management"],
   "inputs": [
     {
-      "name": "raw_answers",
+      "name": "stage",
       "type": "string",
-      "description": "JSON string containing 'lab_identity' and 'strains'."
+      "description": "The section of the BUA form being saved ('lab_identity', 'strains', 'personnel')."
+    },
+    {
+      "name": "raw_data",
+      "type": "string",
+      "description": "A JSON-formatted string matching the fields required by the target stage's Pydantic model."
     }
   ],
-
   "outputs": [
     {
       "type": "object",
-      "description": "Structured dictionary containing the validated BUA data objects."
+      "description": "Returns the validation status, next stage to fetch, and the current global state of the BUA form."
     }
   ],
-
   "examples": [
     {
       "input": {
-        "raw_answers": "{\"lab_identity\": {\"pi_name\": \"Jane Smith\", \"department\": \"MCB\", \"room\": \"Stanley Hall B144\"}, \"strains\": [{\"name\": \"HIV-1 lentiviral vector\", \"source\": \"Addgene\"}]}"
+        "stage": "lab_identity",
+        "raw_data": "{\"pi_name\": \"Dr. Smith\", \"department\": \"Biology\", \"rooms\": [\"101\"]}"
       },
       "output": {
-        "lab_identity": {
-          "pi_name": "Jane Smith",
-          "department": "MCB",
-          "room": "Stanley Hall B144"
-        },
-        "strains": [
-          {
-            "name": "HIV-1 lentiviral vector",
-            "source": "Addgene"
-          }
-        ]
+        "status": "success",
+        "next_stage_to_fetch": "strains"
       }
     }
   ],
-
   "execution_details": {
-    "language": "Python",
+    "language": "python",
     "source": "modules/biosafety/tools/questionnaire_parsing.py",
     "initialization": "initiate",
     "execution": "run"

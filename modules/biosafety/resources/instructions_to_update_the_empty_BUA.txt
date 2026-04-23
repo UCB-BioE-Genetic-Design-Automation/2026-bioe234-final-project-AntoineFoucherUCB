@@ -1,0 +1,12 @@
+Step 1: Update your Template
+Open your empty_BUA.doc, replace the blank spaces with tags, and save it as a modern .docx file in your resources folder.
+
+Old: PI Name: FORMTEXT
+
+New: PI Name: {{ lab_identity.pi_name }}
+
+Old: Department: FORMTEXT
+
+New: Department: {{ lab_identity.department }}
+
+(Note: You will need to install the library by running pip install docxtpl in your terminal).

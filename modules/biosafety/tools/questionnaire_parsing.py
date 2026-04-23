@@ -1,64 +1,55 @@
 import json
-from dataclasses import dataclass, field, asdict
-from typing import List, Optional
-
-@dataclass
-class Personnel:
-    name: str
-    role: str
-    responsibilities: str = ""
-
-@dataclass
-class LabIdentity:
-    pi_name: str
-    pi_email: str
-    department: str
-    rooms: List[str] = field(default_factory=list)
-    personnel: List[Personnel] = field(default_factory=list)
-
-@dataclass
-class Strain:
-    scientific_name: str
-    source: str
-    is_recombinant: bool = False
-    is_lentivirus: bool = False
-    bsl_level: int = 1
-    host_organism: Optional[str] = None
-    transgenes: List[str] = field(default_factory=list)
+# Import the Pydantic models and our central state object
+from modules.biosafety.data.BUA_data_structure import (
+    current_bua_state, LabIdentity, Strain, Personnel
+)
 
 class QuestionnaireParsing:
-    """
-    Description:
-        Parses raw text or JSON responses from the BUA interview into 
-        structured Python objects.
-    """
-
     def initiate(self):
-        pass
+        # Reset the state when the MCP server starts
+        current_bua_state.lab_identity = None
+        current_bua_state.strains = []
+        current_bua_state.personnel = []
 
-    def run(self, raw_answers: str) -> dict:
+    def run(self, stage: str, raw_data: str) -> dict:
         try:
-            data = json.loads(raw_answers)
-            
-            lab_data = data.get("lab_identity", {})
-            personnel_list = [Personnel(**p) for p in lab_data.get("personnel", [])]
-            lab_obj = LabIdentity(
-                pi_name=lab_data.get("pi_name", ""),
-                pi_email=lab_data.get("pi_email", ""),
-                department=lab_data.get("department", ""),
-                rooms=lab_data.get("rooms", []),
-                personnel=personnel_list
-            )
+            data = json.loads(raw_data)
+            next_stage = "complete"
 
-            strain_objs = [Strain(**s) for s in data.get("strains", [])]
+            if stage == "lab_identity":
+                # Pydantic automatically validates the fields here
+                current_bua_state.lab_identity = LabIdentity(**data)
+                next_stage = "strains"
+                
+            elif stage == "strains":
+                if isinstance(data, list):
+                    for s in data:
+                        current_bua_state.strains.append(Strain(**s))
+                else:
+                    current_bua_state.strains.append(Strain(**data))
+                next_stage = "personnel"
+                
+            elif stage == "personnel":
+                if isinstance(data, list):
+                    for p in data:
+                        current_bua_state.personnel.append(Personnel(**p))
+                else:
+                    current_bua_state.personnel.append(Personnel(**data))
+                next_stage = "complete"
+                
+            else:
+                return {"status": "error", "message": f"Unknown stage: {stage}"}
 
             return {
                 "status": "success",
-                "lab_identity": asdict(lab_obj),
-                "strains": [asdict(s) for s in strain_objs]
+                "message": f"Data successfully validated and saved for {stage}.",
+                "next_stage_to_fetch": next_stage,
+                "current_state": current_bua_state.model_dump() # Pydantic's built-in export!
             }
+
         except Exception as e:
-            return {"status": "error", "message": str(e)}
+            # If Pydantic validation fails, we send the error right back to the LLM
+            return {"status": "error", "message": f"Validation failed: {str(e)}. Please correct the JSON and try again."}
 
 _instance = QuestionnaireParsing()
 _instance.initiate()
