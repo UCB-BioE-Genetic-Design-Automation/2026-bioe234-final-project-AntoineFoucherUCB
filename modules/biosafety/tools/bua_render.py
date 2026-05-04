@@ -1,14 +1,21 @@
-import os
 from docxtpl import DocxTemplate
 from modules.biosafety.data.BUA_data_structure import current_bua_state
 
 class BUARenderer:
     def __init__(self):
-        # Point to where your new docx template is saved
-        self.template_path = os.path.join(
-            "modules", "biosafety", "data", "resources", "empty_BUA_template.docx"
+        # 1. Get the exact directory where bua_render.py lives (.../modules/biosafety/tools)
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        
+        # 2. Navigate up one level to 'biosafety', then into 'resources'
+        self.template_path = os.path.normpath(
+            os.path.join(current_dir, "..", "resources", "empty_BUA.docx")
         )
-        self.output_dir = "generated_docs"
+        
+        # 3. Create a generated_docs folder at the root of your project
+        # (Navigating up 3 levels: tools -> biosafety -> modules -> root)
+        self.output_dir = os.path.normpath(
+            os.path.join(current_dir, "..", "..", "..", "generated_docs")
+        )
 
     def initiate(self):
         """Ensure the output directory exists when the server starts."""
@@ -24,7 +31,7 @@ class BUARenderer:
             if not os.path.exists(self.template_path):
                 return {
                     "status": "error",
-                    "message": f"Template not found at {self.template_path}."
+                    "message": f"Template not found at {self.template_path}. Please check the file path."
                 }
 
             # 2. Clean the output filename
@@ -38,11 +45,9 @@ class BUARenderer:
             doc = DocxTemplate(self.template_path)
 
             # 4. Convert our Pydantic BUA state into a dictionary
-            # This will create a dictionary with keys like 'lab_identity', 'strains', etc.
             context = current_bua_state.model_dump()
 
             # 5. Render and Save!
-            # docxtpl automatically matches the dictionary keys to the {{ tags }} in the Word doc
             doc.render(context)
             doc.save(output_path)
 

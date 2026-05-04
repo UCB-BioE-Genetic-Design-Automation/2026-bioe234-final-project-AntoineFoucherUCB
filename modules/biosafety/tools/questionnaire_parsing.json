@@ -3,12 +3,18 @@
   "name": "BUA Questionnaire Data Parser",
   "description": "Takes JSON data extracted by the LLM from the user, validates it against Pydantic models, and updates the global BUA_data_structure.",
   "type": "function",
-  "keywords": ["biosafety", "bua", "parser", "pydantic", "state management"],
+  "keywords": [
+    "biosafety",
+    "bua",
+    "parser",
+    "pydantic",
+    "state management"
+  ],
   "inputs": [
     {
       "name": "stage",
       "type": "string",
-      "description": "The section of the BUA form being saved ('lab_identity', 'strains', 'personnel')."
+      "description": "The section of the BUA form being saved (e.g., 'project_and_pi', 'additional_contacts', 'personnel', 'room_usage', 'biological_agents', 'project_summary')."
     },
     {
       "name": "raw_data",
@@ -25,12 +31,18 @@
   "examples": [
     {
       "input": {
-        "stage": "lab_identity",
-        "raw_data": "{\"pi_name\": \"Dr. Smith\", \"department\": \"Biology\", \"rooms\": [\"101\"]}"
+        "stage": "project_and_pi",
+        "raw_data": "{\"bua_number\": \"12345\", \"project_title\": \"Viral Vector Analysis\", \"pi_info\": {\"name\": \"Dr. Smith\", \"title\": \"Professor\", \"department\": \"Biology\", \"building\": \"Science Hall\", \"room\": \"101\", \"phone\": \"555-0100\", \"email_address\": \"smith@university.edu\", \"fax\": \"\"}}"
       },
       "output": {
         "status": "success",
-        "next_stage_to_fetch": "strains"
+        "message": "Data successfully validated and saved for project_and_pi.",
+        "next_stage_to_fetch": "additional_contacts",
+        "current_state": { 
+          "bua_number": "12345", 
+          "project_title": "Viral Vector Analysis", 
+          "pi_info": { "name": "Dr. Smith", "title": "Professor" } 
+        }
       }
     }
   ],
