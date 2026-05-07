@@ -106,3 +106,10 @@ class BUAForm(BaseModel):
 
 # This is the global state object that will hold the data while the server runs
 current_bua_state = BUAForm()
+
+# Raw (truncated) excerpt of the user-provided document, filled by `doc_parsing`.
+# MCP tools can read this to tailor prompts/questions to the specific file.
+current_document_markdown: str = ""
+
+# Optional: store the last parsed file name/path for traceability/debugging.
+current_document_source: str = ""

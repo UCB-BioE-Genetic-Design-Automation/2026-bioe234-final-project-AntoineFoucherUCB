@@ -2,6 +2,48 @@ class QuestionnairePrompts:
     def __init__(self):
         self.prompts = {}
 
+    def _get_document_notes(self, *, max_chars: int = 4000) -> str:
+        """Extract a small, relevant excerpt so prompts can be tailored per file."""
+        # IMPORTANT: read from module globals each time (doc_parsing overwrites these).
+        import modules.biosafety.data.BUA_data_structure as bua_ds
+
+        raw = (bua_ds.current_document_markdown or "").strip()
+        if not raw:
+            return ""
+
+        keywords = [
+            "pi", "principal investigator", "department", "building", "room",
+            "biosafety level", "bsl", "bl1", "bl2", "bl3",
+            "biosafety cabinet", "bsc",
+            "autoclave",
+            "irb", "iacuc",
+            "lentivirus", "vector", "lenti",
+            "aphis", "select agent", "cdc",
+            "decontamination", "waste", "spill",
+            "containment", "protective equipment", "ppe",
+            "laboratory location", "greenhouse", "growth chamber",
+        ]
+
+        # Score lines by whether they contain any keyword (case-insensitive).
+        lines = [ln.strip() for ln in raw.splitlines() if ln.strip()]
+        matched: list[str] = []
+        lowered_keywords = [k.lower() for k in keywords]
+        for ln in lines:
+            ln_l = ln.lower()
+            if any(k in ln_l for k in lowered_keywords):
+                matched.append(ln)
+            if len("\n".join(matched)) >= max_chars:
+                break
+
+        if not matched:
+            # Fallback: take the beginning of the document if we can't find keywords.
+            matched = lines[: max(1, min(200, len(lines)))]
+
+        notes = "\n".join(matched).strip()
+        if len(notes) > max_chars:
+            notes = notes[: max_chars - 1] + "…"
+        return notes
+
     def initiate(self):
         # A global rule injected into every stage to prevent the LLM from getting stuck
         base_instruction = (
@@ -81,9 +123,34 @@ class QuestionnairePrompts:
     def run(self, stage: str) -> dict:
         stage_key = str(stage).strip().lower()
         if stage_key in self.prompts:
+            doc_notes = self._get_document_notes()
+            doc_source = ""
+            try:
+                import modules.biosafety.data.BUA_data_structure as bua_ds
+                doc_source = (bua_ds.current_document_source or "").strip()
+            except Exception:
+                doc_source = ""
+
+            if doc_notes:
+                tailoring_prefix = (
+                    "TAILORING CONTEXT (use this to customize questions to the uploaded file):\n"
+                    f"{'Uploaded document: ' + doc_source + '\n' if doc_source else ''}"
+                    "DOCUMENT-SPECIFIC NOTES (may contain partial/uncertain info):\n"
+                    f"{doc_notes}\n\n"
+                    "When asking the user questions for this stage:\n"
+                    "- Prefer confirming details already present in the document notes.\n"
+                    "- Only ask additional questions for missing or unclear fields.\n"
+                    "- Do not ask the same generic questions every time; make your questions depend on what the file indicates.\n\n"
+                )
+            else:
+                tailoring_prefix = (
+                    "TAILORING CONTEXT (no document notes detected yet):\n"
+                    "Ask the user for the required fields for this stage, but still do not force answers—leave unknown values empty.\n\n"
+                )
+
             return {
                 "status": "success", 
-                "prompt_text": self.prompts[stage_key]
+                "prompt_text": tailoring_prefix + self.prompts[stage_key]
             }
         return {
             "status": "error", 

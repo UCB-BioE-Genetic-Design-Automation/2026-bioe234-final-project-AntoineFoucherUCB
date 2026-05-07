@@ -1,6 +1,6 @@
 {
   "id": "org.c9.function.biosafety.bua.questionnaire_parsing.v1",
-  "name": "BUA Questionnaire Data Parser",
+  "name": "bua_questionnaire_data_parser",
   "description": "Takes JSON data extracted by the LLM from the user, validates it against Pydantic models, and updates the global BUA_data_structure.",
   "type": "function",
   "keywords": [

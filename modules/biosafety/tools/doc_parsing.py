@@ -1,5 +1,5 @@
-import os
-from modules.biosafety.tools._utils import convert_to_markdown
+from modules.biosafety._utils import convert_to_markdown
+import modules.biosafety.data.BUA_data_structure as bua_ds
 
 class DocParsing:
     def initiate(self):
@@ -16,6 +16,14 @@ class DocParsing:
             
             # Use our utility function to get the markdown
             markdown_text = convert_to_markdown(clean_path)
+
+            # Store a truncated excerpt for later prompt tailoring.
+            # (We keep it truncated to avoid blowing up the LLM context.)
+            excerpt_limit = 20000
+            truncated = markdown_text[:excerpt_limit]
+            # Update global state for other MCP tools (e.g., questionnaire_prompts).
+            bua_ds.current_document_markdown = truncated
+            bua_ds.current_document_source = clean_path
             
             return {
                 "status": "success",

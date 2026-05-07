@@ -6,6 +6,7 @@ from modules.biosafety.data.BUA_data_structure import (
     BiologicalAgent, 
     ProjectSummary,
 )
+import modules.biosafety.data.BUA_data_structure as bua_ds
 
 class QuestionnaireParsing:
     def initiate(self):
@@ -21,6 +22,9 @@ class QuestionnaireParsing:
         current_bua_state.iacuc_approval_sought = False
         current_bua_state.biological_agents = []
         current_bua_state.project_summary = None
+        # Also reset any stored uploaded-document context used for tailored questioning.
+        bua_ds.current_document_markdown = ""
+        bua_ds.current_document_source = ""
 
     def run(self, stage: str, raw_data: str) -> dict:
         try:
