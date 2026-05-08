@@ -64,6 +64,10 @@ class BiologicalAgent(BaseModel):
     growth_chamber_location: str = Field(default="", description="Growth chamber/incubator location for use")
     field_release_location: str = Field(default="", description="Field release location")
     cdc_select_agent: bool = Field(default=False, description="Is it a CDC select agent or toxin?")
+    # Optional external cross-reference fields (ABSA tool).
+    absa_risk_group: str = Field(default="", description="ABSA-referenced risk group, if available")
+    absa_reference: str = Field(default="", description="ABSA source URL or citation")
+    cross_reference_notes: str = Field(default="", description="Short notes from ABSA source cross-reference")
 
 # ==========================================
 # FORM 4: PROJECT SUMMARY

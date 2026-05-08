@@ -144,6 +144,18 @@ class MCPGeminiEngine:
         self._system_content: Optional[types.Content] = None
         self._config: Optional[types.GenerateContentConfig] = None
 
+    async def _reset_mcp(self) -> None:
+        """Drop the current MCP client so next ensure call reconnects."""
+        try:
+            if self._mcp is not None:
+                await self._mcp.__aexit__(None, None, None)
+        except Exception:
+            pass
+        finally:
+            self._mcp = None
+            self._system_content = None
+            self._config = None
+
     async def _ensure_mcp(self) -> None:
         if self._mcp is not None and self._system_content is not None and self._config is not None:
             return
@@ -243,6 +255,7 @@ class MCPGeminiEngine:
             for fc in function_calls:
                 tool_name = fc.name
                 tool_args = dict(fc.args or {})
+                result_data = ""
 
                 print(f"\n[Tool call] → {tool_name}")
                 print(json.dumps(tool_args, indent=2))
@@ -261,7 +274,30 @@ class MCPGeminiEngine:
                         result_data = str(tool_result)
                     fn_response = {"result": result_data}
                 except Exception as e:
-                    fn_response = {"error": str(e)}
+                    err = str(e)
+                    # FastMCP session can occasionally drop; reconnect and retry once.
+                    if "Client is not connected" in err:
+                        try:
+                            await self._reset_mcp()
+                            await self._ensure_mcp()
+                            assert self._mcp is not None
+                            mcp = self._mcp
+                            tool_result = await mcp.call_tool(tool_name, tool_args)
+                            if isinstance(tool_result, list):
+                                result_data = "\n".join(
+                                    getattr(item, "text", str(item)) for item in tool_result
+                                )
+                            elif hasattr(tool_result, "content"):
+                                result_data = "\n".join(
+                                    getattr(item, "text", str(item)) for item in tool_result.content
+                                )
+                            else:
+                                result_data = str(tool_result)
+                            fn_response = {"result": result_data}
+                        except Exception as retry_e:
+                            fn_response = {"error": str(retry_e)}
+                    else:
+                        fn_response = {"error": err}
 
                 print(f"[Tool result] ← {tool_name}:")
                 print(json.dumps(fn_response, indent=2))

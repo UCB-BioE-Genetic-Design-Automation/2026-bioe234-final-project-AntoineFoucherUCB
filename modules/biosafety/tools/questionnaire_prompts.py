@@ -1,3 +1,23 @@
+# Common stage-name aliases models may invent.
+_STAGE_ALIASES = {
+    "initial": "start",
+    "initial_questions": "start",
+    "intro_questions": "start",
+    "opening": "start",
+    "begin": "start",
+    "intro": "start",
+    "first": "start",
+    "lab_identity": "project_and_pi",
+    "pi_info": "project_and_pi",
+    "project_pi": "project_and_pi",
+}
+
+
+def _normalize_stage(stage: str) -> str:
+    sk = str(stage).strip().lower()
+    return _STAGE_ALIASES.get(sk, sk)
+
+
 class QuestionnairePrompts:
     def __init__(self):
         self.prompts = {}
@@ -119,7 +139,7 @@ class QuestionnairePrompts:
         }
 
     def run(self, stage: str) -> dict:
-        stage_key = str(stage).strip().lower()
+        stage_key = _normalize_stage(stage)
         if stage_key in self.prompts:
             doc_notes = self._get_document_notes()
             doc_source = ""
