@@ -71,21 +71,20 @@ class QuestionnairePrompts:
         self.prompts = {
             "start": (
                 "Welcome the user to the BUA generator and explain that you will guide them through the form. "
-                "Then, IMMEDIATELY transition into the 'project_and_pi' stage. Ask the user for their BUA Number (if known), "
-                "Project Title, and the PI's Name, Title, Department, Building, Room, Phone, Email, and Fax. "
+                "Then, IMMEDIATELY transition into the 'project_and_pi' stage. Ask the user for their BUA Number (if known), Project Title,"
+                "what university they are at, and which US state that university is in."
                 f"{base_instruction}"
                 "Once you have gathered ALL of this info (or the user has given all they know), call `questionnaire_parsing` with EXACTLY: "
                 "stage='project_and_pi'\n"
-                "raw_data=A JSON string containing 'bua_number' (str), 'project_title' (str), and 'pi_info' (object with keys: name, title, department, building, room, phone, email_address, fax)."
+                "raw_data=A JSON string containing 'university' (str), 'state' (str), 'bua_number' (str), 'project_title' (str)"
             ),
             
             "project_and_pi": (
-                "You are gathering Project and PI Information. Ask the user for the BUA Number (if known), Project Title, "
-                "and the PI's Name, Title, Department, Building, Room, Phone, Email, and Fax. "
+                "You are gathering PI Information. Ask the user for the PI's Name, Title, Department, Building, Room, Phone, Email, and Fax. "
                 f"{base_instruction}"
                 "Once gathered, call `questionnaire_parsing` with EXACTLY: "
                 "stage='project_and_pi'\n"
-                "raw_data=A JSON string containing 'bua_number' (str), 'project_title' (str), and 'pi_info' (object with keys: name, title, department, building, room, phone, email_address, fax)."
+                "raw_data=A JSON string containing 'pi_info' (object with keys: name, title, department, building, room, phone, email_address, fax)."
             ),
             
             "additional_contacts": (

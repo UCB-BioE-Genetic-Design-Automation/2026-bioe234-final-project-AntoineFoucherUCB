@@ -1,6 +1,6 @@
 {
-  "id": "org.c9.function.biosafety.bua.questionnaire_prompts.v1",
-  "name": "bua_questionnaire_prompt_retriever",
+  "id": "org.c9.function.biosafety.bua.questionnaire_prompts",
+  "name": "questionnaire_prompts",
   "description": "Retrieves stage-specific conversational instructions for the LLM. The conversation's purpose is to have the user give info about the BUA's information in a structured way, and this function provides the LLM with the appropriate instructions to ask the user for the right information at each stage.",
   "type": "function",
   "keywords": [
@@ -26,11 +26,11 @@
   "examples": [
     {
       "input": {
-        "stage": "project_and_pi"
+        "stage": "start"
       },
       "output": {
         "status": "success",
-        "prompt_text": "You are gathering Project and PI Information. Ask the user for the BUA Number (if known), Project Title, and the PI's Name, Title, Department..."
+        "prompt_text": "Welcome the user to the BUA generator and explain that you will guide them through the form. Then, IMMEDIATELY transition into the 'project_and_pi' stage. Ask the user for their BUA Number (if known), Project Title, what university they are at, and which US state that university is in. Once you have gathered ALL of this info (or the user has given all they know), call `questionnaire_parsing` with EXACTLY: stage='project_and_pi'\nraw_data=A JSON string containing 'university' (str), 'state' (str), 'bua_number' (str), 'project_title' (str)"
       }
     }
   ],

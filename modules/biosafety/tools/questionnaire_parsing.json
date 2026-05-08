@@ -1,6 +1,6 @@
 {
-  "id": "org.c9.function.biosafety.bua.questionnaire_parsing.v1",
-  "name": "bua_questionnaire_data_parser",
+  "id": "org.c9.function.biosafety.bua.questionnaire_parsing",
+  "name": "questionnaire_parsing",
   "description": "Takes JSON data extracted by the LLM from the user, validates it against Pydantic models, and updates the global BUA_data_structure.",
   "type": "function",
   "keywords": [
@@ -19,7 +19,7 @@
     {
       "name": "raw_data",
       "type": "string",
-      "description": "A JSON-formatted string matching the fields required by the target stage's Pydantic model."
+      "description": "A JSON-formatted string matching the fields required by the target stage's Pydantic model. For example, 'project_and_pi' requires 'university', 'state', 'bua_number', and 'project_title'."
     }
   ],
   "outputs": [
@@ -32,13 +32,15 @@
     {
       "input": {
         "stage": "project_and_pi",
-        "raw_data": "{\"bua_number\": \"12345\", \"project_title\": \"Viral Vector Analysis\", \"pi_info\": {\"name\": \"Dr. Smith\", \"title\": \"Professor\", \"department\": \"Biology\", \"building\": \"Science Hall\", \"room\": \"101\", \"phone\": \"555-0100\", \"email_address\": \"smith@university.edu\", \"fax\": \"\"}}"
+        "raw_data": "{\"university\": \"State University\", \"state\": \"California\", \"bua_number\": \"12345\", \"project_title\": \"Viral Vector Analysis\", \"pi_info\": {\"name\": \"Dr. Smith\", \"title\": \"Professor\", \"department\": \"Biology\", \"building\": \"Science Hall\", \"room\": \"101\", \"phone\": \"555-0100\", \"email_address\": \"smith@university.edu\", \"fax\": \"\"}}"
       },
       "output": {
         "status": "success",
         "message": "Data successfully validated and saved for project_and_pi.",
         "next_stage_to_fetch": "additional_contacts",
         "current_state": { 
+          "university": "State University",
+          "state": "California",
           "bua_number": "12345", 
           "project_title": "Viral Vector Analysis", 
           "pi_info": { "name": "Dr. Smith", "title": "Professor" } 

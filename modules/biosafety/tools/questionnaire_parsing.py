@@ -9,11 +9,12 @@ from modules.biosafety.data.BUA_data_structure import (
     ProjectSummary,
 )
 import modules.biosafety.data.BUA_data_structure as bua_ds
-import json
 
 class QuestionnaireParsing:
     def initiate(self):
         # Reset the global state when the MCP server starts
+        current_bua_state.university = ""
+        current_bua_state.state = ""
         current_bua_state.bua_number = ""
         current_bua_state.project_title = ""
         current_bua_state.pi_info = None
@@ -35,6 +36,10 @@ class QuestionnaireParsing:
             next_stage = "complete"
 
             if stage == "project_and_pi":
+                # Parse the new university and state fields
+                current_bua_state.university = data.get("university", "")
+                current_bua_state.state = data.get("state", "")
+                
                 current_bua_state.bua_number = data.get("bua_number", "")
                 current_bua_state.project_title = data.get("project_title", "")
                 if data.get("pi_info"):
