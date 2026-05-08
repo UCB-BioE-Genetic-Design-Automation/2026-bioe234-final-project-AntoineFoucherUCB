@@ -13,6 +13,54 @@ from fastmcp.client.transports.stdio import PythonStdioTransport
 from google import genai
 from google.genai import types, errors
 
+_MAX_TOOL_ROUNDS = 32
+_MCP_TOOL_TIMEOUT_S = 45.0
+
+
+def _extract_response_text(resp: Any) -> str:
+    text = getattr(resp, "text", None)
+    if text is not None and str(text).strip():
+        return str(text).strip()
+    candidates = getattr(resp, "candidates", None) or []
+    if not candidates:
+        return ""
+    content = getattr(candidates[0], "content", None)
+    parts = getattr(content, "parts", None) or []
+    chunks: List[str] = []
+    for part in parts:
+        pt = getattr(part, "text", None)
+        if pt:
+            chunks.append(str(pt))
+    return "\n".join(chunks).strip()
+
+
+def _fallback_reply_from_prompt_events(events: List["ToolEvent"]) -> str | None:
+    for ev in reversed(events or []):
+        if ev.tool_name != "bua_questionnaire_prompt_retriever":
+            continue
+        result_str = ev.response.get("result")
+        if not isinstance(result_str, str):
+            continue
+        try:
+            parsed = json.loads(result_str)
+        except Exception:
+            continue
+        prompt_text = parsed.get("prompt_text")
+        if isinstance(prompt_text, str) and prompt_text.strip():
+            return prompt_text.strip()
+    return None
+
+
+def _parse_tool_result_dict(result_data: str) -> Dict[str, Any]:
+    if not isinstance(result_data, str):
+        return {}
+    try:
+        parsed = json.loads(result_data)
+        return parsed if isinstance(parsed, dict) else {}
+    except Exception:
+        return {}
+
+
 def _strip_ctx_from_schema(schema: dict) -> dict:
     schema = dict(schema or {})
     props = dict(schema.get("properties", {}))
@@ -144,6 +192,50 @@ class MCPGeminiEngine:
         self._system_content: Optional[types.Content] = None
         self._config: Optional[types.GenerateContentConfig] = None
 
+    async def _call_tool_with_reconnect_retry(
+        self,
+        mcp: Client,
+        tool_name: str,
+        tool_args: Dict[str, Any],
+    ) -> tuple[Client, Dict[str, Any], str]:
+        async def _call(current_mcp: Client) -> tuple[Dict[str, Any], str]:
+            tool_result = await asyncio.wait_for(
+                current_mcp.call_tool(tool_name, tool_args),
+                timeout=_MCP_TOOL_TIMEOUT_S,
+            )
+            if isinstance(tool_result, list):
+                result_data = "\n".join(getattr(item, "text", str(item)) for item in tool_result)
+            elif hasattr(tool_result, "content"):
+                result_data = "\n".join(
+                    getattr(item, "text", str(item)) for item in tool_result.content
+                )
+            else:
+                result_data = str(tool_result)
+            return {"result": result_data}, result_data
+
+        try:
+            fn_response, result_data = await _call(mcp)
+            return mcp, fn_response, result_data
+        except Exception as e:
+            err = str(e)
+            should_reconnect = (
+                "Client is not connected" in err
+                or isinstance(e, asyncio.TimeoutError)
+                or "timed out" in err.lower()
+            )
+            if not should_reconnect:
+                return mcp, {"error": err}, ""
+
+        try:
+            await self._reset_mcp()
+            await self._ensure_mcp()
+            assert self._mcp is not None
+            mcp = self._mcp
+            fn_response, result_data = await _call(mcp)
+            return mcp, fn_response, result_data
+        except Exception as retry_e:
+            return mcp, {"error": f"Tool failed after reconnect: {retry_e}"}, ""
+
     async def _reset_mcp(self) -> None:
         """Drop the current MCP client so next ensure call reconnects."""
         try:
@@ -205,7 +297,7 @@ class MCPGeminiEngine:
                 raise
             except errors.ClientError as e:
                 msg = str(e)
-                if "429" in msg or "RESOURCE_EXHAUSTED" in msg and attempt < self.max_429_retries - 1:
+                if ("429" in msg or "RESOURCE_EXHAUSTED" in msg) and attempt < self.max_429_retries - 1:
                     import re
 
                     match = re.search(r"retry[^\d]*(\d+(?:\.\d+)?)\s*s", msg, re.IGNORECASE)
@@ -235,19 +327,25 @@ class MCPGeminiEngine:
         resp = initial_resp
         events: List[ToolEvent] = []
         generated_doc_path: Optional[str] = None
+        rounds = 0
 
         while True:
+            rounds += 1
+            if rounds > _MAX_TOOL_ROUNDS:
+                self.state.last_tool_events = events
+                return "Stopping after too many tool rounds. Please retry.", contents
             function_calls = resp.function_calls or []
 
             if not function_calls:
-                reply = resp.text or "[No text response]"
                 if not resp.candidates:
-                    return resp.text or "", contents
+                    fallback = _fallback_reply_from_prompt_events(events)
+                    return fallback or "", contents
                 contents.append(resp.candidates[0].content)
                 self.state.last_tool_events = events
                 if generated_doc_path:
                     self.state.last_generated_doc_path = generated_doc_path
-                return resp.text, contents
+                reply_text = _extract_response_text(resp) or _fallback_reply_from_prompt_events(events) or ""
+                return reply_text, contents
 
             fc_content = resp.candidates[0].content
             fr_parts: List[types.Part] = []
@@ -260,44 +358,9 @@ class MCPGeminiEngine:
                 print(f"\n[Tool call] → {tool_name}")
                 print(json.dumps(tool_args, indent=2))
 
-                try:
-                    tool_result = await mcp.call_tool(tool_name, tool_args)
-                    if isinstance(tool_result, list):
-                        result_data = "\n".join(
-                            getattr(item, "text", str(item)) for item in tool_result
-                        )
-                    elif hasattr(tool_result, "content"):
-                        result_data = "\n".join(
-                            getattr(item, "text", str(item)) for item in tool_result.content
-                        )
-                    else:
-                        result_data = str(tool_result)
-                    fn_response = {"result": result_data}
-                except Exception as e:
-                    err = str(e)
-                    # FastMCP session can occasionally drop; reconnect and retry once.
-                    if "Client is not connected" in err:
-                        try:
-                            await self._reset_mcp()
-                            await self._ensure_mcp()
-                            assert self._mcp is not None
-                            mcp = self._mcp
-                            tool_result = await mcp.call_tool(tool_name, tool_args)
-                            if isinstance(tool_result, list):
-                                result_data = "\n".join(
-                                    getattr(item, "text", str(item)) for item in tool_result
-                                )
-                            elif hasattr(tool_result, "content"):
-                                result_data = "\n".join(
-                                    getattr(item, "text", str(item)) for item in tool_result.content
-                                )
-                            else:
-                                result_data = str(tool_result)
-                            fn_response = {"result": result_data}
-                        except Exception as retry_e:
-                            fn_response = {"error": str(retry_e)}
-                    else:
-                        fn_response = {"error": err}
+                mcp, fn_response, result_data = await self._call_tool_with_reconnect_retry(
+                    mcp, tool_name, tool_args
+                )
 
                 print(f"[Tool result] ← {tool_name}:")
                 print(json.dumps(fn_response, indent=2))
@@ -306,12 +369,50 @@ class MCPGeminiEngine:
                     ToolEvent(tool_name=tool_name, args=tool_args, response=fn_response)
                 )
 
-                if tool_name == "BUA Document Renderer" and "file_path" in result_data:
+                if tool_name in {"BUA Document Renderer", "bua_render"} and "file_path" in result_data:
                     generated_doc_path = result_data
 
                 fr_parts.append(
                     types.Part.from_function_response(name=tool_name, response=fn_response)
                 )
+
+                # Deterministic bridge: after a successful parser save, always fetch next stage prompt.
+                if tool_name == "bua_questionnaire_data_parser":
+                    parsed = _parse_tool_result_dict(result_data)
+                    if parsed.get("status") == "success":
+                        next_stage = parsed.get("next_stage_to_fetch")
+                        if isinstance(next_stage, str) and next_stage and next_stage != "complete":
+                            already_called = any(
+                                e.tool_name == "bua_questionnaire_prompt_retriever"
+                                and str(e.args.get("stage", "")).strip() == next_stage
+                                for e in events
+                            )
+                            if not already_called:
+                                try:
+                                    bridge_args = {"stage": next_stage}
+                                    mcp, bridge_response, _bridge_result_data = (
+                                        await self._call_tool_with_reconnect_retry(
+                                            mcp,
+                                            "bua_questionnaire_prompt_retriever",
+                                            bridge_args,
+                                        )
+                                    )
+                                except Exception as bridge_err:
+                                    bridge_response = {"error": str(bridge_err)}
+
+                                events.append(
+                                    ToolEvent(
+                                        tool_name="bua_questionnaire_prompt_retriever",
+                                        args=bridge_args,
+                                        response=bridge_response,
+                                    )
+                                )
+                                fr_parts.append(
+                                    types.Part.from_function_response(
+                                        name="bua_questionnaire_prompt_retriever",
+                                        response=bridge_response,
+                                    )
+                                )
 
             fr_content = types.Content(role="user", parts=fr_parts)
             contents.extend([fc_content, fr_content])
