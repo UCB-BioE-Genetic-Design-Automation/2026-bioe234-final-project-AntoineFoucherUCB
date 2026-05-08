@@ -1,22 +1,20 @@
 {
-  "id": "org.c9.function.biosafety.bua.questionnaire_prompts",
-  "name": "questionnaire_prompts",
-  "description": "CRITICAL: Call this function with stage='start' IMMEDIATELY when a user asks to create, make, or start a new BUA form. This retrieves the required stage-specific conversational instructions for the LLM. You must use these exact prompts to gather information in a structured way at each stage of the BUA process.",
+  "id": "org.c9.function.biosafety.bua.questionnaire_prompts.v1",
+  "name": "bua_questionnaire_prompt_retriever",
+  "description": "Retrieves stage-specific conversational instructions for the LLM. The conversation's purpose is to have the user give info about the BUA's information in a structured way, and this function provides the LLM with the appropriate instructions to ask the user for the right information at each stage.",
   "type": "function",
   "keywords": [
     "biosafety",
     "bua",
     "prompt",
     "instructions",
-    "routing",
-    "start",
-    "create"
+    "routing"
   ],
   "inputs": [
     {
       "name": "stage",
       "type": "string",
-      "description": "The current stage of the interview (e.g., 'start', 'project_and_pi', 'additional_contacts', 'personnel', 'room_usage', 'biological_agents', 'project_summary'). Use 'start' for new requests."
+      "description": "The current stage of the interview (e.g., 'start', 'project_and_pi', 'additional_contacts', 'personnel', 'room_usage', 'biological_agents', 'project_summary')."
     }
   ],
   "outputs": [
@@ -28,11 +26,11 @@
   "examples": [
     {
       "input": {
-        "stage": "start"
+        "stage": "project_and_pi"
       },
       "output": {
         "status": "success",
-        "prompt_text": "Welcome to the BUA generator. Explain to the user that you will guide them..."
+        "prompt_text": "You are gathering Project and PI Information. Ask the user for the BUA Number (if known), Project Title, and the PI's Name, Title, Department..."
       }
     }
   ],

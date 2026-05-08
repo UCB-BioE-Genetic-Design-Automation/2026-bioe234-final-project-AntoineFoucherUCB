@@ -60,3 +60,19 @@ Use once the interview is complete and institutional defaults are gathered. The 
 - **One section at a time:** Group by Identity -> Scope -> Materials -> Specific Modules. Do not overwhelm the user.
 - **Validation:** If `questionnaire_parsing` returns a status error, identify which field is missing (e.g., PI name or room number) and ask the user specifically for it.
 - **Comprehensive Parsing:** Do not just pass user answers to the parser. You must actively inject the relevant safety and NIH guideline text retrieved from the `bua_resource_reader` into the final JSON payload.
+
+---
+
+## Direct BSL lookup behavior
+
+When the user asks questions like:
+- "What is the BSL for X?"
+- "What risk group is X?"
+- "Show ABSA classification for X"
+
+you MUST:
+1. Call `bua_absa_retrieve` with the organism name (top_k=3).
+2. Build your answer from `matches[*].risk_by_source` only; **do not mention sources missing from those rows**.
+3. Include row citations using `row_index` and `item_id`.
+4. If no matches are returned, say ABSA data was not found and ask for manual review.
+5. Never invent a single consensus group unless the user explicitly asks you to compute one.

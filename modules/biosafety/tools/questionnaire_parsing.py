@@ -1,3 +1,5 @@
+import json
+
 from modules.biosafety.data.BUA_data_structure import (
     current_bua_state, 
     ContactInfo, 
