@@ -56,7 +56,7 @@ class QuestionnairePrompts:
             "start": (
                 "Welcome to the BUA generator. Explain to the user that you will guide them "
                 "through creating their full Biological Use Authorization form. "
-                "Ask them if they are ready to begin with the Project Title, BUA Number, and PI Information."
+                "Ask them if they are ready to begin with the BUA Number."
             ),
             
             "project_and_pi": (

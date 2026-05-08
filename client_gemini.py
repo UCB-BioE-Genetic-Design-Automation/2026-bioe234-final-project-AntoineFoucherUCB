@@ -14,7 +14,6 @@ from dotenv import load_dotenv
 
 from mcp_gemini_engine import MCPGeminiEngine
 
-
 async def run_chat() -> None:
     load_dotenv()
     engine = MCPGeminiEngine(project_dir=Path(__file__).parent)
