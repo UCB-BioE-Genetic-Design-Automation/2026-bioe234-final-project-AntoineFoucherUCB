@@ -1,6 +1,6 @@
 {
-  "id": "org.c9.function.biosafety.bua.doc_parsing.v1",
-  "name": "bua_document_parser",
+  "id": "org.c9.function.biosafety.bua.doc_parsing",
+  "name": "doc_parsing",
   "description": "Reads a provided document (PDF, Word, TXT) and converts its contents into a Markdown string for the LLM to read and analyze.",
   "type": "function",
   "keywords": [

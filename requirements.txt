@@ -6,4 +6,5 @@ pytest>=7.0
 pymupdf
 python-docx
 docxtpl
+
 streamlit

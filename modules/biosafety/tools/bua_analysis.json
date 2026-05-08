@@ -1,6 +1,6 @@
 {
-  "id": "org.c9.function.biosafety.bua.doc_analysis.v1",
-  "name": "bua_compliance_analysis_review",
+  "id": "org.c9.function.biosafety.bua.doc_analysis",
+  "name": "bua_analysis",
   "description": "Fetches the current global BUA Data Structure and instructs the LLM to analyze it for misinformation, safety inconsistencies, or missing compliance data.",
   "type": "function",
   "keywords": [

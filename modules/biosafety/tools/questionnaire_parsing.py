@@ -7,6 +7,7 @@ from modules.biosafety.data.BUA_data_structure import (
     ProjectSummary,
 )
 import modules.biosafety.data.BUA_data_structure as bua_ds
+import json
 
 class QuestionnaireParsing:
     def initiate(self):

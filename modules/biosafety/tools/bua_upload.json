@@ -1,6 +1,6 @@
 {
-  "id": "org.c9.function.biosafety.bua.bua_batch_import.v1",
-  "name": "bua_full_document_importer",
+  "id": "org.c9.function.biosafety.bua.bua_upload",
+  "name": "bua_upload",
   "description": "Takes a complete JSON representation of a BUA form extracted by the LLM from an uploaded document, validates it, and populates the entire global BUA Data Structure in one batch operation.",
   "type": "function",
   "keywords": [

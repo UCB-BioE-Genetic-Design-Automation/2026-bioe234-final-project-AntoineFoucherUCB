@@ -13,7 +13,6 @@ from fastmcp.client.transports.stdio import PythonStdioTransport
 from google import genai
 from google.genai import types, errors
 
-
 def _strip_ctx_from_schema(schema: dict) -> dict:
     schema = dict(schema or {})
     props = dict(schema.get("properties", {}))

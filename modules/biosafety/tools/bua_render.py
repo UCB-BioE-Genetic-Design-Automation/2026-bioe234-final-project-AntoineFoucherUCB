@@ -1,5 +1,6 @@
-from docxtpl import DocxTemplate
 from modules.biosafety.data.BUA_data_structure import current_bua_state
+from docxtpl import DocxTemplate
+import os
 
 class BUARenderer:
     def __init__(self):
