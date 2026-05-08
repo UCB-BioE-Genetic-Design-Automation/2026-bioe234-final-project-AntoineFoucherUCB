@@ -7,7 +7,10 @@ _STAGE_ALIASES = {
     "begin": "start",
     "intro": "start",
     "first": "start",
-    "lab_identity": "project_and_pi",
+    "lab_identity": "project_registration",
+    "registration": "project_registration",
+    "project_intro": "project_registration",
+    "bua_header": "project_registration",
     "pi_info": "project_and_pi",
     "project_pi": "project_and_pi",
 }
@@ -71,14 +74,23 @@ class QuestionnairePrompts:
         self.prompts = {
             "start": (
                 "Welcome the user to the BUA generator and explain that you will guide them through the form. "
-                "Then, IMMEDIATELY transition into the 'project_and_pi' stage. Ask the user for their BUA Number (if known), Project Title,"
-                "what university they are at, and which US state that university is in."
+                "Then ask ONLY for project header fields: BUA Number (if known), Project Title,"
+                " what university they are at, and which US state that university is in."
+                " Do NOT ask for the Principal Investigator yet—that is the NEXT stage."
                 f"{base_instruction}"
-                "Once you have gathered ALL of this info (or the user has given all they know), call `questionnaire_parsing` with EXACTLY: "
-                "stage='project_and_pi'\n"
-                "raw_data=A JSON string containing 'university' (str), 'state' (str), 'bua_number' (str), 'project_title' (str)"
+                "Once you have gathered ALL of this header info (or the user has given all they know), call `questionnaire_parsing` with EXACTLY: "
+                "stage='project_registration'\n"
+                "raw_data=A JSON string containing ONLY these keys: 'university' (str), 'state' (str), 'bua_number' (str), 'project_title' (str)."
+                " Omit pi_info entirely; ignore any stray PI/name fields—the parser will not store PI in this stage."
             ),
-            
+            "project_registration": (
+                "You are saving the project header only (university, state, BUA number if any, project title). "
+                "Do NOT collect or save the PI in this stage. "
+                f"{base_instruction}"
+                "When ready, call `questionnaire_parsing` with EXACTLY: "
+                "stage='project_registration'\n"
+                "raw_data=A JSON string with ONLY 'university' (str), 'state' (str), 'bua_number' (str), 'project_title' (str)."
+            ),
             "project_and_pi": (
                 "You are gathering PI Information. Ask the user for the PI's Name, Title, Department, Building, Room, Phone, Email, and Fax. "
                 f"{base_instruction}"
@@ -90,6 +102,9 @@ class QuestionnairePrompts:
             "additional_contacts": (
                 "You are gathering Additional Contacts. Ask if there is a Co-Investigator and/or a Lab Contact. "
                 "If so, ask for their Name, Title, Department, Building, Room, Phone, Email, and Fax. "
+                "If the user explicitly says the Principal Investigator is also the Lab Contact (same person), "
+                "populate lab_contact_info with the same structured details as the PI from the PI stage—unless they give different wording, copy name/title/dept/building/room/phone/email/fax accurately. "
+                "Do NOT assume PI and Lab Contact are the same unless the user stated that; unrelated BUAs may have another lab manager. "
                 f"{base_instruction}"
                 "Once gathered, call `questionnaire_parsing` with EXACTLY: "
                 "stage='additional_contacts'\n"

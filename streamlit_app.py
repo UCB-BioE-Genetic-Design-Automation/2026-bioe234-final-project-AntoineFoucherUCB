@@ -2,15 +2,21 @@ from __future__ import annotations
 
 import asyncio
 import ast
+import base64
 import json
 import os
+import shutil
+import subprocess
+import tempfile
 import threading
 from pathlib import Path
 from typing import Any, Coroutine, Optional, TypeVar
 
 import streamlit as st
+from streamlit.errors import StreamlitAPIException
 from docx import Document
 from dotenv import load_dotenv
+from streamlit.components.v1 import html as st_html
 
 from mcp_gemini_engine import EngineState, MCPGeminiEngine
 
@@ -60,6 +66,7 @@ def _init_state() -> None:
     st.session_state.setdefault("uploaded_path", None)
     st.session_state.setdefault("upload_processed", False)
     st.session_state.setdefault("questionnaire_complete", False)
+    st.session_state.setdefault("questionnaire_started", False)
 
 
 async def _send(engine: MCPGeminiEngine, user_text: str):
@@ -171,7 +178,7 @@ def _extract_latest_bua_state(state: Optional[EngineState]) -> Optional[dict[str
     if not state or not state.last_tool_events:
         return None
     for ev in reversed(state.last_tool_events):
-        if ev.tool_name != "bua_questionnaire_data_parser":
+        if ev.tool_name not in {"bua_questionnaire_data_parser", "questionnaire_parsing"}:
             continue
         payload = _parse_tool_result_payload(ev.response.get("result"))
         current_state = payload.get("current_state")
@@ -184,7 +191,7 @@ def _extract_questionnaire_complete(state: Optional[EngineState]) -> bool:
     if not state or not state.last_tool_events:
         return False
     for ev in reversed(state.last_tool_events):
-        if ev.tool_name != "bua_questionnaire_data_parser":
+        if ev.tool_name not in {"bua_questionnaire_data_parser", "questionnaire_parsing"}:
             continue
         payload = _parse_tool_result_payload(ev.response.get("result"))
         if (
@@ -223,6 +230,16 @@ def _render_bua_preview_panel() -> None:
 
 
 def _run_turn(engine: MCPGeminiEngine, user_text: str) -> None:
+    kickoff_text = "Start the BUA questionnaire."
+    if user_text.strip() == kickoff_text:
+        # Strong duplicate guard against Streamlit reruns/button replays.
+        for m in st.session_state.get("messages", []):
+            if m.get("role") == "user" and str(m.get("content", "")).strip() == kickoff_text:
+                return
+        if st.session_state.get("questionnaire_started"):
+            return
+        st.session_state.questionnaire_started = True
+
     st.session_state.messages.append({"role": "user", "content": user_text})
     with st.chat_message("user"):
         st.markdown(user_text)
@@ -281,6 +298,16 @@ def _docx_to_text(doc_path: Path) -> str:
     try:
         doc = Document(str(doc_path))
         lines = [p.text.strip() for p in doc.paragraphs if p.text and p.text.strip()]
+        for table in doc.tables:
+            for row in table.rows:
+                cells = []
+                for cell in row.cells:
+                    cell_text = "\n".join(
+                        p.text.strip() for p in cell.paragraphs if p.text and p.text.strip()
+                    ).strip()
+                    cells.append(cell_text)
+                if any(cells):
+                    lines.append(" | ".join(cells))
         text = "\n".join(lines).strip()
         if not text:
             return "(Rendered document has no plain text paragraphs to preview.)"
@@ -289,6 +316,146 @@ def _docx_to_text(doc_path: Path) -> str:
         return text
     except Exception as e:
         return f"(Could not preview rendered document text: {e})"
+
+
+def _soffice_candidates() -> list[Path]:
+    paths: list[Path] = []
+    env_exe = os.environ.get("LIBREOFFICE_SOFFICE_PATH", "").strip()
+    if env_exe:
+        paths.append(Path(env_exe))
+    paths.extend(
+        [
+            Path(r"C:\Program Files\LibreOffice\program\soffice.exe"),
+            Path(r"C:\Program Files (x86)\LibreOffice\program\soffice.exe"),
+        ]
+    )
+    out: list[Path] = []
+    for raw in paths:
+        p = Path(raw)
+        if p.is_file():
+            out.append(p)
+    which = shutil.which("soffice")
+    if which:
+        wp = Path(which)
+        out.append(wp)
+
+    seen: set[str] = set()
+    uniq: list[Path] = []
+    for raw in out:
+        try:
+            key = str(raw.resolve())
+        except Exception:
+            key = str(raw)
+        if key in seen:
+            continue
+        seen.add(key)
+        uniq.append(raw)
+    return uniq
+
+
+def _docx_to_pdf_bytes(doc_path: Path) -> tuple[Optional[bytes], str]:
+    """
+    Produce PDF bytes preserving layout / table lines (unlike HTML conversion).
+    Tries LibreOffice headless first, then docx2pdf (requires Microsoft Word on Windows/Mac).
+    Optional env: DOCX_PREVIEW_PDF_CONVERTER=libreoffice|word|auto (default auto),
+    LIBREOFFICE_SOFFICE_PATH=full path to soffice.exe
+    """
+    doc_path = doc_path.resolve()
+    if not doc_path.is_file():
+        return None, "Document file not found."
+
+    mode = os.environ.get("DOCX_PREVIEW_PDF_CONVERTER", "auto").strip().lower()
+    word_err = ""
+
+    tmp_root = tempfile.mkdtemp(prefix="bua_pdf_")
+    try:
+        if mode in ("", "auto", "libreoffice"):
+            for soffice in _soffice_candidates():
+                cmd = [
+                    str(soffice),
+                    "--headless",
+                    "--norestore",
+                    "--nologo",
+                    "--nofirststartwizard",
+                    "--convert-to",
+                    "pdf",
+                    "--outdir",
+                    str(tmp_root),
+                    str(doc_path),
+                ]
+                try:
+                    subprocess.run(
+                        cmd,
+                        check=False,
+                        timeout=180,
+                        capture_output=True,
+                        text=True,
+                    )
+                except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+                    continue
+
+                pdf_file = Path(tmp_root) / f"{doc_path.stem}.pdf"
+                if pdf_file.is_file() and pdf_file.stat().st_size > 400:
+                    return pdf_file.read_bytes(), "LibreOffice"
+
+        if mode in ("", "auto", "word"):
+            out_pdf = Path(tmp_root) / f"{doc_path.stem}.pdf"
+            try:
+                from docx2pdf import convert as docx_convert  # type: ignore[import-untyped]
+
+                docx_convert(str(doc_path), str(out_pdf))
+                if out_pdf.is_file() and out_pdf.stat().st_size > 400:
+                    return out_pdf.read_bytes(), "Microsoft Word (docx2pdf)"
+            except Exception as e:
+                word_err = str(e)
+
+        suffix = f" Detail: {word_err[:280]}" if word_err else ""
+        return (
+            None,
+            "Could not produce a PDF preview. Install LibreOffice (recommended) or "
+            "`pip install docx2pdf` with Word installed." + suffix,
+        )
+    finally:
+        shutil.rmtree(tmp_root, ignore_errors=True)
+
+
+def _show_pdf_embedding(pdf_bytes: bytes, height: int = 720) -> None:
+    show = getattr(st, "pdf", None)
+    if callable(show):
+        try:
+            show(pdf_bytes, height=height)
+            return
+        except StreamlitAPIException:
+            st.caption("Native PDF viewer unavailable (`pip install 'streamlit[pdf]'`). Using iframe fallback.")
+        except Exception:
+            st.caption("Could not render with st.pdf — using iframe fallback.")
+    b64 = base64.b64encode(pdf_bytes).decode("utf-8")
+    st_html(
+        f'<iframe src="data:application/pdf;base64,{b64}" width="100%" height="{height}"></iframe>',
+        height=height + 24,
+        scrolling=True,
+    )
+
+
+def _docx_to_html(doc_path: Path) -> str:
+    try:
+        import mammoth
+
+        with open(doc_path, "rb") as f:
+            result = mammoth.convert_to_html(f)
+        body = result.value or ""
+        return (
+            "<div style='font-family: Arial, sans-serif; padding: 0.75rem; line-height: 1.45;'>"
+            f"{body}"
+            "</div>"
+        )
+    except Exception as e:
+        return (
+            "<div style='font-family: Arial, sans-serif; padding: 0.75rem;'>"
+            f"<p><strong>Visual preview unavailable.</strong> {e}</p>"
+            "<p>Use the download button for the exact Word formatting.</p>"
+            "</div>"
+        )
 
 
 def main() -> None:
@@ -311,6 +478,7 @@ def main() -> None:
             st.session_state.mode = None
             st.session_state.upload_processed = False
             st.session_state.questionnaire_complete = False
+            st.session_state.questionnaire_started = False
             st.session_state.live_bua_state = None
             st.session_state.messages = []
             st.rerun()
@@ -337,6 +505,7 @@ def main() -> None:
     if st.session_state.mode == "fresh" and not st.session_state.messages:
         if st.button("Start questionnaire now", type="primary"):
             st.session_state.questionnaire_complete = False
+            st.session_state.questionnaire_started = False
             _run_turn(engine, "Start the BUA questionnaire.")
 
     for m in st.session_state.messages:
@@ -354,9 +523,33 @@ def main() -> None:
     if doc_path:
         p = Path(doc_path)
         if p.exists():
+            with st.expander("Rendered Document Viewer (PDF)", expanded=True):
+                cache_key = ("pdf_preview", str(p.resolve()), p.stat().st_mtime_ns)
+                if st.session_state.get("_render_pdf_cache_key") != cache_key:
+                    pdf_bytes, pdf_note = _docx_to_pdf_bytes(p)
+                    st.session_state["_render_pdf_cache_key"] = cache_key
+                    st.session_state["_render_pdf_bytes"] = pdf_bytes
+                    st.session_state["_render_pdf_note"] = pdf_note
+                pdf_bytes = st.session_state.get("_render_pdf_bytes")
+                pdf_note = str(st.session_state.get("_render_pdf_note") or "")
+
+                if pdf_bytes:
+                    st.caption(f"Layout-faithful preview ({pdf_note.strip()}).")
+                    _show_pdf_embedding(pdf_bytes, height=720)
+                    st.download_button(
+                        "Download rendered PDF",
+                        data=pdf_bytes,
+                        file_name=p.with_suffix(".pdf").name,
+                        mime="application/pdf",
+                    )
+                else:
+                    st.warning(pdf_note or "PDF preview unavailable.")
+                with st.expander("Approximate HTML preview (no boxes)", expanded=False):
+                    st_html(_docx_to_html(p), height=480, scrolling=True)
+
             preview_text = st.session_state.get("last_render_text")
             if preview_text:
-                with st.expander("Rendered Document Preview", expanded=True):
+                with st.expander("Rendered Document Preview (plain text)", expanded=False):
                     st.text_area("Rendered BUA text", value=preview_text, height=320)
             with st.sidebar:
                 st.success("Latest BUA document generated")

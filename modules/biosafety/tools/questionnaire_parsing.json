@@ -14,12 +14,12 @@
     {
       "name": "stage",
       "type": "string",
-      "description": "The section of the BUA form being saved (e.g., 'project_and_pi', 'additional_contacts', 'personnel', 'room_usage', 'biological_agents', 'project_summary')."
+      "description": "The section of the BUA form being saved (e.g., 'project_registration', 'project_and_pi', 'additional_contacts', 'personnel', 'room_usage', 'biological_agents', 'project_summary')."
     },
     {
       "name": "raw_data",
       "type": "string",
-      "description": "A JSON-formatted string matching the fields required by the target stage's Pydantic model. For example, 'project_and_pi' requires 'university', 'state', 'bua_number', and 'project_title'."
+      "description": "A JSON-formatted string matching the fields required by the target stage. 'project_registration' requires only university, state, bua_number, project_title (no PI). 'project_and_pi' requires pi_info or equivalent PI fields."
     }
   ],
   "outputs": [
@@ -31,19 +31,37 @@
   "examples": [
     {
       "input": {
+        "stage": "project_registration",
+        "raw_data": "{\"university\": \"State University\", \"state\": \"California\", \"bua_number\": \"12345\", \"project_title\": \"Viral Vector Analysis\"}"
+      },
+      "output": {
+        "status": "success",
+        "message": "Data successfully validated and saved for project_registration.",
+        "next_stage_to_fetch": "project_and_pi",
+        "current_state": {
+          "university": "State University",
+          "state": "California",
+          "bua_number": "12345",
+          "project_title": "Viral Vector Analysis",
+          "pi_info": { "name": "", "title": "" }
+        }
+      }
+    },
+    {
+      "input": {
         "stage": "project_and_pi",
-        "raw_data": "{\"university\": \"State University\", \"state\": \"California\", \"bua_number\": \"12345\", \"project_title\": \"Viral Vector Analysis\", \"pi_info\": {\"name\": \"Dr. Smith\", \"title\": \"Professor\", \"department\": \"Biology\", \"building\": \"Science Hall\", \"room\": \"101\", \"phone\": \"555-0100\", \"email_address\": \"smith@university.edu\", \"fax\": \"\"}}"
+        "raw_data": "{\"pi_info\": {\"name\": \"Dr. Smith\", \"title\": \"Professor\", \"department\": \"Biology\", \"building\": \"Science Hall\", \"room\": \"101\", \"phone\": \"555-0100\", \"email_address\": \"smith@university.edu\", \"fax\": \"\"}}"
       },
       "output": {
         "status": "success",
         "message": "Data successfully validated and saved for project_and_pi.",
         "next_stage_to_fetch": "additional_contacts",
-        "current_state": { 
+        "current_state": {
           "university": "State University",
           "state": "California",
-          "bua_number": "12345", 
-          "project_title": "Viral Vector Analysis", 
-          "pi_info": { "name": "Dr. Smith", "title": "Professor" } 
+          "bua_number": "12345",
+          "project_title": "Viral Vector Analysis",
+          "pi_info": { "name": "Dr. Smith", "title": "Professor" }
         }
       }
     }

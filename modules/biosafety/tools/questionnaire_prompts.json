@@ -14,7 +14,7 @@
     {
       "name": "stage",
       "type": "string",
-      "description": "The current stage of the interview (e.g., 'start', 'project_and_pi', 'additional_contacts', 'personnel', 'room_usage', 'biological_agents', 'project_summary')."
+      "description": "The current stage of the interview (e.g., 'start', 'project_registration', 'project_and_pi', 'additional_contacts', 'personnel', 'room_usage', 'biological_agents', 'project_summary')."
     }
   ],
   "outputs": [
@@ -30,7 +30,7 @@
       },
       "output": {
         "status": "success",
-        "prompt_text": "Welcome the user to the BUA generator and explain that you will guide them through the form. Then, IMMEDIATELY transition into the 'project_and_pi' stage. Ask the user for their BUA Number (if known), Project Title, what university they are at, and which US state that university is in. Once you have gathered ALL of this info (or the user has given all they know), call `questionnaire_parsing` with EXACTLY: stage='project_and_pi'\nraw_data=A JSON string containing 'university' (str), 'state' (str), 'bua_number' (str), 'project_title' (str)"
+        "prompt_text": "Welcome the user to the BUA generator … ask ONLY project header fields (no PI yet); then save with questionnaire_parsing stage='project_registration' and raw_data JSON keys university, state, bua_number, project_title only. Full wording and tool rules live in questionnaire_prompts.py."
       }
     }
   ],

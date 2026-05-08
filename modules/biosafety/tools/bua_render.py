@@ -1,6 +1,14 @@
-from modules.biosafety.data.BUA_data_structure import current_bua_state
-from docxtpl import DocxTemplate
+import copy
+import json
 import os
+from pathlib import Path
+
+from modules.biosafety.data.BUA_data_structure import (
+    BUAForm,
+    current_bua_state,
+    sync_pi_and_lab_contacts_inplace,
+)
+from docxtpl import DocxTemplate
 
 class BUARenderer:
     def __init__(self):
@@ -17,6 +25,7 @@ class BUARenderer:
         self.output_dir = os.path.normpath(
             os.path.join(current_dir, "..", "..", "..", "generated_docs")
         )
+        self.state_snapshot_path = Path(current_dir).parent / "data" / "bua_state_snapshot.json"
 
     def initiate(self):
         """Ensure the output directory exists when the server starts."""
@@ -45,8 +54,31 @@ class BUARenderer:
             # 3. Load the template
             doc = DocxTemplate(self.template_path)
 
-            # 4. Convert our Pydantic BUA state into a dictionary
-            context = current_bua_state.model_dump()
+            # Load persisted questionnaire state (important across Streamlit reconnects).
+            if self.state_snapshot_path.exists():
+                try:
+                    saved = BUAForm(**json.loads(self.state_snapshot_path.read_text(encoding="utf-8")))
+                    current_bua_state.university = saved.university
+                    current_bua_state.state = saved.state
+                    current_bua_state.bua_number = saved.bua_number
+                    current_bua_state.project_title = saved.project_title
+                    current_bua_state.pi_info = saved.pi_info
+                    current_bua_state.co_investigator_info = saved.co_investigator_info
+                    current_bua_state.lab_contact_info = saved.lab_contact_info
+                    current_bua_state.personnel = saved.personnel
+                    current_bua_state.room_usage = saved.room_usage
+                    current_bua_state.irb_approval_sought = saved.irb_approval_sought
+                    current_bua_state.iacuc_approval_sought = saved.iacuc_approval_sought
+                    current_bua_state.biological_agents = saved.biological_agents
+                    current_bua_state.project_summary = saved.project_summary
+                except Exception:
+                    pass
+
+            # Keep PI ↔ lab contact aligned (same-as-PI filling both Word sections).
+            sync_pi_and_lab_contacts_inplace(current_bua_state)
+
+            # 4. Convert our Pydantic BUA state into a dictionary (+ display fallbacks)
+            context = copy.deepcopy(current_bua_state.model_dump())
 
             # 5. Render and Save!
             doc.render(context)
