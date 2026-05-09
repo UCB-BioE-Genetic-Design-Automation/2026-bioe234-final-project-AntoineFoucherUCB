@@ -10,7 +10,11 @@ _STAGE_ALIASES = {
     "lab_identity": "project_info",
     "project": "project_info",
     "pi": "pi_info",
-    "principal_investigator": "pi_info"
+    "principal_investigator": "pi_info",
+    "submission": "project_summary",
+    "final_submission": "project_summary",
+    "final": "project_summary",
+    "submit": "project_summary",
 }
 
 

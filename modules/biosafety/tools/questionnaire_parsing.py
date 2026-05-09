@@ -222,20 +222,21 @@ class QuestionnaireParsing:
             _load_state_from_disk()
             data = json.loads(raw_data)
             next_stage = "complete"
+            stage_key = _normalize_stage(stage)
 
-            if stage == "project_info":
+            if stage_key == "project_info":
                 current_bua_state.university = data.get("university", "")
                 current_bua_state.state = data.get("state", "")
                 current_bua_state.bua_number = data.get("bua_number", "")
                 current_bua_state.project_title = data.get("project_title", "")
                 next_stage = "pi_info"
 
-            elif stage == "pi_info":
+            elif stage_key == "pi_info":
                 if data.get("pi_info"):
                     current_bua_state.pi_info = ContactInfo(**data["pi_info"])
                 next_stage = "additional_contacts"
 
-            elif stage == "additional_contacts":
+            elif stage_key == "additional_contacts":
                 if "co_investigator_info" in data:
                     inc_ci = ContactInfo(**(data.get("co_investigator_info") or {}))
                     current_bua_state.co_investigator_info = _merge_contact_pick_nonempty(
@@ -248,14 +249,14 @@ class QuestionnaireParsing:
                     )
                 next_stage = "personnel"
             
-            elif stage == "personnel":
+            elif stage_key == "personnel":
                 # Handle if LLM passes it wrapped in a "personnel" key or directly as a list
                 pers_list = data.get("personnel", data) if isinstance(data, dict) else data
                 if isinstance(pers_list, list):
                     current_bua_state.personnel = [_coerce_personnel_item(p or {}) for p in pers_list]
                 next_stage = "room_usage"
 
-            elif stage == "room_usage":
+            elif stage_key == "room_usage":
                 current_bua_state.irb_approval_sought = data.get("irb_approval_sought", False)
                 current_bua_state.iacuc_approval_sought = data.get("iacuc_approval_sought", False)
                 rooms_list = data.get("room_usage", [])
@@ -263,20 +264,20 @@ class QuestionnaireParsing:
                     current_bua_state.room_usage = [_coerce_room_item(r or {}) for r in rooms_list]
                 next_stage = "biological_agents"
 
-            elif stage == "biological_agents":
+            elif stage_key == "biological_agents":
                 agents_list = data.get("biological_agents", [])
                 if isinstance(agents_list, list):
                     current_bua_state.biological_agents = [_coerce_agent_item(a or {}) for a in agents_list]
                 next_stage = "project_summary"
 
-            elif stage == "project_summary":
+            elif stage_key == "project_summary":
                 summary_data = data.get("project_summary", data)
                 if isinstance(summary_data, dict) and summary_data:
                     current_bua_state.project_summary = _coerce_project_summary(summary_data)
                 next_stage = "complete"
 
             else:
-                return {"status": "error", "message": f"Unknown stage: {stage}"}
+                return {"status": "error", "message": f"Unknown stage: {stage} (normalized: {stage_key})"}
 
             sync_pi_and_lab_contacts_inplace(current_bua_state)
             _save_state_to_disk()

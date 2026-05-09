@@ -27,9 +27,16 @@ The framework handles connecting your Python codes to the AI.
 ├── server.py                      # MCP server — do not edit
 ├── client_gemini.py               # Gemini CLI client — do not edit
 ├── requirements.txt
+├── pytest.ini
 │
 ├── tests/
-│   └── test_tools.py
+│   ├── conftest.py
+│   ├── test_bua_analysis.py
+│   ├── test_bua_render.py
+│   ├── test_doc_parsing.py
+│   ├── test_questionnaire_parsing.py
+│   ├── test_questionnaire_prompts.py
+│   └── test_seq_basics_tools.py
 │
 └── modules/
     ├── __init__.py                # Scans all sub-modules — do not edit
@@ -480,11 +487,15 @@ modules/
 
 ## 15. Running tests
 
+From the repo root (`modules/` and `pytest.ini`):
+
 ```bash
 pytest -vv -l
 ```
 
-Write tests that cover both typical inputs and edge cases. See `tests/test_tools.py` for examples — it shows how to test both the class directly and via the module-level alias.
+**`pytest.ini`** sets `pythonpath = .` and `testpaths = tests`; **`tests/conftest.py`** also ensures the repo root is on `sys.path` during collection.
+
+Examples live under **`tests/`** (e.g. `test_questionnaire_parsing.py`, `test_doc_parsing.py`; **`test_seq_basics_tools.py`** shows the module-level callable pattern).
 
 ---
 

@@ -49,7 +49,10 @@ def convert_to_markdown(file_path: str) -> str:
     except Exception as e:
         logging.error(f"Error parsing document: {e}")
         raise
-    
+
+
+convert_docx_to_markdown = convert_to_markdown
+
 # ABSA database retrieval utilities
 
 def _tokenize(text: str) -> set[str]:
