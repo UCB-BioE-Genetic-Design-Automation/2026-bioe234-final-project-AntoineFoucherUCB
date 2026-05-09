@@ -38,15 +38,15 @@
       "name": "Mark Lewis",
       "phone": "555-0301",
       "biosafety_training": true,
-      "bloodborne_pathogens_training": true,
+      "bloodborne_pathogens_training": false,
       "medical_waste_training": true
     },
     {
       "name": "Sarah Jenkins",
       "phone": "555-0302",
       "biosafety_training": true,
-      "bloodborne_pathogens_training": true,
-      "medical_waste_training": true
+      "bloodborne_pathogens_training": false,
+      "medical_waste_training": false
     }
   ],
   "room_usage": [
@@ -54,11 +54,11 @@
       "building": "Greenleaf Sciences Building",
       "room_number": "402",
       "shared_room": false,
-      "biosafety_level": "BL3",
+      "biosafety_level": "BL1",
       "storage": true,
-      "research": true,
-      "biosafety_cabinet": true,
-      "autoclave": true,
+      "research": false,
+      "biosafety_cabinet": false,
+      "autoclave": false,
       "medical_waste": false,
       "animal": false
     },
@@ -94,8 +94,8 @@
       "growth_chamber_location": "",
       "field_release_location": "",
       "cdc_select_agent": false,
-      "absa_risk_group": "RG1",
-      "absa_reference": "NIH Guidelines Appendix B-I-A, Section A-1",
+      "absa_risk_group": "",
+      "absa_reference": "",
       "cross_reference_notes": ""
     },
     {
@@ -114,39 +114,19 @@
       "growth_chamber_location": "Incubator Room 106",
       "field_release_location": "",
       "cdc_select_agent": false,
-      "absa_risk_group": "RG1",
-      "absa_reference": "NIH Guidelines Appendix B-I-A, Section A-1",
-      "cross_reference_notes": ""
-    },
-    {
-      "scientific_name": "Mycobacterium tuberculosis",
-      "common_name": "",
-      "indigenous": false,
-      "agent_state": {
-        "active": true,
-        "desiccated": false,
-        "frozen": true,
-        "other": ""
-      },
-      "aphis_permit_obtained": false,
-      "laboratory_location": "Greenleaf 402",
-      "greenhouse_location": "",
-      "growth_chamber_location": "",
-      "field_release_location": "",
-      "cdc_select_agent": false,
-      "absa_risk_group": "RG3",
-      "absa_reference": "BMBL 6th Edition, Section VIII-D-3",
+      "absa_risk_group": "",
+      "absa_reference": "",
       "cross_reference_notes": ""
     }
   ],
   "project_summary": {
     "project_goal": "To develop drought-resistant crop strains.",
-    "experimental_procedure": "Transforming Arabidopsis plants using Agrobacterium cultures via the floral dip method. Work with Mycobacterium tuberculosis will be conducted under BSL-3 conditions.",
-    "containment": "BSL-3 procedures will be followed for work with Mycobacterium tuberculosis in Greenleaf 402. Standard BSL-1 practices will be used for other agents in designated BSL-1 facilities.",
-    "protective_equipment": "For BSL-3 work with Mycobacterium tuberculosis: Respiratory protection (N95 or PAPR as required), double gloves, solid-front gown, and eye protection. For BSL-1 work: Standard lab coats, safety glasses, nitrile gloves, and enclosed footwear.",
-    "transportation_methods": "Sealed, shatterproof secondary plastic bins for transport to the greenhouse (BSL-1 agents). Transport of Mycobacterium tuberculosis will adhere to DOT and IATA regulations for infectious substances, utilizing appropriate primary, secondary, and tertiary containment, and transported only by authorized personnel.",
-    "decontamination_methods": "For BSL-3 work with Mycobacterium tuberculosis: Specific disinfectants effective against mycobacteria (e.g., 1:10 bleach solution with appropriate contact time, phenolic disinfectants) on all benchtops and equipment. All contaminated surfaces and equipment will be decontaminated before removal from containment. For BSL-1 work: 10% bleach solution on all benchtops, and other appropriate disinfectants for specific materials, following safety protocols.",
-    "waste_disposal": "For BSL-3 work with Mycobacterium tuberculosis: All infectious waste (solid and liquid) will be collected in biohazard bags/containers, sealed, decontaminated by autoclaving before removal from the BSL-3 facility, and then disposed of as regulated medical waste. For BSL-1 work: Solid biological waste is autoclaved before standard disposal; liquid waste is bleached for 30 minutes before pouring down the sink.",
-    "spill_emergency_procedures": "For BSL-3 work with Mycobacterium tuberculosis: Immediately notify other lab personnel. Evacuate area if aerosol likely. Cover spill with absorbent material, apply appropriate mycobactericidal disinfectant (e.g., 1:10 bleach solution with extended contact time), wait, then wipe up while wearing full BSL-3 PPE. Inform PI and EHS immediately. For BSL-1 work: Cover spill with paper towels, soak in 10% bleach, wait 20 minutes, then wipe up while wearing PPE."
+    "experimental_procedure": "Transforming Arabidopsis plants using Agrobacterium cultures via the floral dip method.",
+    "containment": "BSL-1 procedures.",
+    "protective_equipment": "Standard lab coats, safety glasses, nitrile gloves, and enclosed footwear.",
+    "transportation_methods": "Sealed, shatterproof secondary plastic bins for transport to the greenhouse.",
+    "decontamination_methods": "10% bleach solution on all benchtops, and other appropriate disinfectants for specific materials, following safety protocols.",
+    "waste_disposal": "Solid biological waste is autoclaved before standard disposal; liquid waste is bleached for 30 minutes before pouring down the sink with a copious amount of water.",
+    "spill_emergency_procedures": "Immediately report the incident to the laboratory manager or PI and biosafety program staff. Cover spill with paper towels, soak in 10% bleach, wait 20 minutes, then wipe up while wearing PPE."
   }
 }

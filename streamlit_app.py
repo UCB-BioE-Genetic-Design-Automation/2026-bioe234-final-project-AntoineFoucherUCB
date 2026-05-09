@@ -474,9 +474,19 @@ def _docx_to_pdf_bytes(doc_path: Path) -> tuple[Optional[bytes], str]:
         if mode in ("", "auto", "word"):
             out_pdf = Path(tmp_root) / f"{doc_path.stem}.pdf"
             try:
+                import pythoncom
                 from docx2pdf import convert as docx_convert  # type: ignore[import-untyped]
+                
+                # 1. Initialize the COM thread for Streamlit
+                pythoncom.CoInitialize()
+                
+                try:
+                    # 2. Run the conversion
+                    docx_convert(str(doc_path), str(out_pdf))
+                finally:
+                    # 3. Always uninitialize to prevent memory leaks/thread locking
+                    pythoncom.CoUninitialize()
 
-                docx_convert(str(doc_path), str(out_pdf))
                 if out_pdf.is_file() and out_pdf.stat().st_size > 400:
                     return out_pdf.read_bytes(), "Microsoft Word (docx2pdf)"
             except Exception as e:
@@ -582,7 +592,15 @@ def main() -> None:
                         "Please extract this data and save it to the state using the 'questionnaire_parsing' tool. "
                         "You must call the tool sequentially, using ONLY these exact stage names: "
                         "'project_info', 'pi_info', 'additional_contacts', 'personnel', 'room_usage', "
-                        "'biological_agents', and 'project_summary'. Do not invent new stage names."
+                        "'biological_agents', and 'project_summary'.\n\n"
+                        "CRITICAL JSON SCHEMA RULES. You must format your raw_data exactly as follows:\n"
+                        "- project_info: Must include keys \"university\", \"state\", \"bua_number\", and \"project_title\". If the exact state or university isn't explicitly named, extract whatever placeholders are used (like 'State University').\n"
+                        "- pi_info: Wrap data in {\"pi_info\": {\"name\": \"...\", \"email_address\": \"...\"}}\n"
+                        "- additional_contacts: Must use top-level keys \"co_investigator_info\" and \"lab_contact_info\"\n"
+                        "- personnel: Training data must use flat keys: \"biosafety_training\", \"bloodborne_pathogens_training\", \"medical_waste_training\"\n"
+                        "- room_usage: Wrap the list of rooms in {\"room_usage\": [...]}\n"
+                        "- biological_agents: Wrap the list in {\"biological_agents\": [...]}. Use exact keys: \"scientific_name\", \"common_name\", \"indigenous\" (boolean), \"agent_state\" (dict with booleans \"active\", \"desiccated\", \"frozen\", and string \"other\"), \"aphis_permit_obtained\" (bool), \"laboratory_location\", \"greenhouse_location\", \"growth_chamber_location\", \"field_release_location\", \"cdc_select_agent\" (bool). IMPORTANT: In the text, interpret the symbol '■' as True/Yes and '□' as False/No.\n"
+                        "- project_summary: Must include keys \"project_goal\", \"experimental_procedure\", \"containment\", \"protective_equipment\", \"transportation_methods\", \"decontamination_methods\", \"waste_disposal\", and \"spill_emergency_procedures\"."
                     )
                     
                     # 4. Send the prompt + text to the LLM
