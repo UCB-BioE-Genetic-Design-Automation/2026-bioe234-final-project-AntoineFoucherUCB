@@ -1,14 +1,14 @@
 {
   "id": "org.c9.function.biosafety.bua.doc_parsing",
   "name": "doc_parsing",
-  "description": "Reads a provided document (PDF, Word, TXT) and converts its contents into a Markdown string for the LLM to read and analyze.",
+  "description": "Reads a provided .docx document and converts its contents into a Markdown string for the LLM to read, analyze, and extract BUA data.",
   "type": "function",
   "keywords": [
     "biosafety",
     "bua",
     "parser",
-    "pdf",
     "docx",
+    "word",
     "markdown",
     "document reading"
   ],
@@ -16,23 +16,24 @@
     {
       "name": "file_path",
       "type": "string",
-      "description": "The absolute or relative path to the document file that needs to be read."
+      "description": "The absolute or relative path to the uploaded .docx document that needs to be read."
     }
   ],
   "outputs": [
     {
       "type": "object",
-      "description": "A dictionary containing the status and the extracted 'markdown_content' of the document."
+      "description": "A dictionary containing the 'status', a system 'message', and the extracted 'document_text' as a markdown string."
     }
   ],
   "examples": [
     {
       "input": {
-        "file_path": "./uploads/safety_guidelines.pdf"
+        "file_path": "./uploads/bua_draft_submission.docx"
       },
       "output": {
         "status": "success",
-        "markdown_content": "## Document: safety_guidelines.pdf\n\nAll lentiviral vectors must be treated as Risk Group 2..."
+        "message": "Document successfully read. Please extract the BUA data from the following markdown text and save it to the state using your questionnaire_parsing tool.",
+        "document_text": "## Document: bua_draft_submission\n\n**Project Title:** Viral Vector Engineering\n**Principal Investigator:** Dr. Elena Rostova..."
       }
     }
   ],

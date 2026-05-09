@@ -487,21 +487,33 @@ def main() -> None:
         uploads_dir = PROJECT_DIR / "uploads"
         uploads_dir.mkdir(parents=True, exist_ok=True)
         uploaded = st.file_uploader("Upload .docx", type=["docx"])
+        
         if uploaded is not None:
             safe_name = Path(uploaded.name).name
             out_path = uploads_dir / safe_name
+            # 1. Save the file temporarily so the Python parser can read it
             out_path.write_bytes(uploaded.getbuffer())
             st.session_state.uploaded_path = str(out_path)
             st.success(f"Uploaded: {safe_name}")
+            
             if not st.session_state.upload_processed:
-                kickoff = (
-                    "Parse this uploaded document and use it to populate BUA state. "
-                    f"File path: {st.session_state.uploaded_path}. "
-                    "Call doc_parsing, then save extracted data with bua_upload or stage parsers."
-                )
-                _run_turn(engine, kickoff)
-                st.session_state.upload_processed = True
-
+                with st.spinner("Extracting text from document..."):
+                    # 2. Extract the text right here in Streamlit!
+                    # (You can also import and use your convert_docx_to_markdown here instead)
+                    extracted_text = _docx_to_text(out_path)
+                    
+                    # 3. Inject the actual text directly into the LLM prompt
+                    kickoff = (
+                        "I have uploaded a BUA document. Here is the full text extracted from it:\n\n"
+                        f"--- START OF DOCUMENT ---\n{extracted_text}\n--- END OF DOCUMENT ---\n\n"
+                        "Please read this document and simply reply with: 'Document received and read. I am ready to begin extracting the data.' "
+                        "Do NOT call any tools yet."
+                    )
+                    
+                    # 4. Send the prompt + text to the LLM
+                    _run_turn(engine, kickoff)
+                    st.session_state.upload_processed = True
+                    
     if st.session_state.mode == "fresh" and not st.session_state.messages:
         if st.button("Start questionnaire now", type="primary"):
             st.session_state.questionnaire_complete = False

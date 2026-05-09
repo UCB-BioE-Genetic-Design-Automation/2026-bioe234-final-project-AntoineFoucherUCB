@@ -30,9 +30,8 @@ class DocAnalysis:
             analysis_instructions = (
                 f"You are an expert Institutional Biosafety Committee (IBC) reviewer. "
                 f"Review the attached BUA form data. Focus your analysis on: {focus_area}. "
-                "1. For each biological agent scientific_name, call bua_absa_retrieve(query=<scientific_name>, top_k=3). "
-                "   Use returned risk_by_source values only; do not invent missing sources. "
-                "   Cite row_index/item_id for every classification used. "
+                "1. Review the 'absa_risk_group' field provided for each biological agent. This data has already been retrieved from the ABSA database for you. "
+                "   Use these provided risk classifications only; do not invent missing sources or attempt to call external tools. "
                 "2. Flag any misinformation (e.g., a known human pathogen listed as Risk Group 1). "
                 "3. Check for logical inconsistencies (e.g., Lentivirus listed, but 'is_viral_vector' is False). "
                 "4. Check for missing mandatory personnel training if handling Risk Group 2+. "

@@ -1,50 +1,37 @@
-from modules.biosafety._utils import convert_to_markdown
-import modules.biosafety.data.BUA_data_structure as bua_ds
+import os
+from modules.biosafety._utils import convert_docx_to_markdown 
 
 class DocParsing:
     def initiate(self):
-        # No complex initialization required for standard file reading
         pass
 
     def run(self, file_path: str) -> dict:
         """
-        Executes the document parsing and returns the text to the LLM.
+        Reads the uploaded .docx file from Streamlit and returns Markdown text 
+        so the LLM can parse and extract the BUA form data.
         """
         try:
-            # Clean up the path just in case the LLM adds quotes
-            clean_path = file_path.strip("\"'")
-            
-            # Use our utility function to get the markdown
-            markdown_text = convert_to_markdown(clean_path)
+            # 1. Verify the file actually exists where Streamlit saved it
+            if not os.path.exists(file_path):
+                return {
+                    "status": "error", 
+                    "message": f"Could not find the file at: {file_path}"
+                }
 
-            # Store a truncated excerpt for later prompt tailoring.
-            # (We keep it truncated to avoid blowing up the LLM context.)
-            excerpt_limit = 20000
-            truncated = markdown_text[:excerpt_limit]
-            # Update global state for other MCP tools (e.g., questionnaire_prompts).
-            bua_ds.current_document_markdown = truncated
-            bua_ds.current_document_source = clean_path
-            
+            # 2. Convert the .docx to markdown using your utility
+            document_text = convert_docx_to_markdown(file_path)
+
+            # 3. Return the text to the LLM so it can begin extraction
             return {
                 "status": "success",
-                "message": "Document parsed successfully. Please read the content and update the BUA_data_structure using the questionnaire_parsing tool if necessary.",
-                "markdown_content": markdown_text
+                "message": "Document successfully read. Please extract the BUA data from the following markdown text and save it to the state using your questionnaire_parsing tool.",
+                "document_text": document_text
             }
-            
-        except FileNotFoundError as e:
-            return {
-                "status": "error", 
-                "message": str(e)
-            }
-        except ValueError as e:
-            return {
-                "status": "error",
-                "message": str(e)
-            }
+
         except Exception as e:
             return {
-                "status": "error", 
-                "message": f"An unexpected error occurred while parsing the document: {str(e)}"
+                "status": "error",
+                "message": f"Failed to read the document: {str(e)}"
             }
 
 # Standard C9 instantiation and export
