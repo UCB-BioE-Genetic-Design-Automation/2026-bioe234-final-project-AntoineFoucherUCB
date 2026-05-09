@@ -1,0 +1,132 @@
+{
+  "university": "State University",
+  "state": "Kentucky",
+  "bua_number": "1234",
+  "project_title": "CRISPR-Cas9 Mediated Gene Silencing in Arabidopsis thaliana",
+  "pi_info": {
+    "name": "Dr. Aris Thorne",
+    "title": "Associate Professor",
+    "department": "Plant Biology",
+    "building": "Greenleaf Sciences Building",
+    "room": "402",
+    "phone": "555-0198",
+    "email_address": "athorne@university.edu",
+    "fax": ""
+  },
+  "co_investigator_info": {
+    "name": "Dr. Elena Rostova",
+    "title": "Research Scientist",
+    "department": "Plant Biology",
+    "building": "Ag-Tech Building",
+    "room": "115",
+    "phone": "555-0234",
+    "email_address": "erostova@university.edu",
+    "fax": ""
+  },
+  "lab_contact_info": {
+    "name": "Dr. Aris Thorne",
+    "title": "Associate Professor",
+    "department": "Plant Biology",
+    "building": "Greenleaf Sciences Building",
+    "room": "402",
+    "phone": "555-0198",
+    "email_address": "athorne@university.edu",
+    "fax": ""
+  },
+  "personnel": [
+    {
+      "name": "Mark Lewis",
+      "phone": "555-0301",
+      "biosafety_training": true,
+      "bloodborne_pathogens_training": false,
+      "medical_waste_training": true
+    },
+    {
+      "name": "Sarah Jenkins",
+      "phone": "555-0302",
+      "biosafety_training": true,
+      "bloodborne_pathogens_training": false,
+      "medical_waste_training": false
+    }
+  ],
+  "room_usage": [
+    {
+      "building": "Greenleaf Sciences Building",
+      "room_number": "104",
+      "shared_room": true,
+      "biosafety_level": "BL1",
+      "storage": false,
+      "research": true,
+      "biosafety_cabinet": true,
+      "autoclave": false,
+      "medical_waste": false,
+      "animal": false
+    },
+    {
+      "building": "Greenleaf Sciences Building",
+      "room_number": "106",
+      "shared_room": true,
+      "biosafety_level": "BL1",
+      "storage": false,
+      "research": true,
+      "biosafety_cabinet": false,
+      "autoclave": false,
+      "medical_waste": false,
+      "animal": false
+    }
+  ],
+  "irb_approval_sought": false,
+  "iacuc_approval_sought": false,
+  "biological_agents": [
+    {
+      "scientific_name": "Agrobacterium tumefaciens",
+      "common_name": "crown gall bacterium",
+      "indigenous": true,
+      "agent_state": {
+        "active": true,
+        "desiccated": false,
+        "frozen": true,
+        "other": ""
+      },
+      "aphis_permit_obtained": false,
+      "laboratory_location": "Yes",
+      "greenhouse_location": "Yes",
+      "growth_chamber_location": "",
+      "field_release_location": "",
+      "cdc_select_agent": false,
+      "absa_risk_group": "",
+      "absa_reference": "",
+      "cross_reference_notes": ""
+    },
+    {
+      "scientific_name": "Escherichia coli",
+      "common_name": "E. coli",
+      "indigenous": true,
+      "agent_state": {
+        "active": true,
+        "desiccated": false,
+        "frozen": true,
+        "other": ""
+      },
+      "aphis_permit_obtained": false,
+      "laboratory_location": "Yes",
+      "greenhouse_location": "",
+      "growth_chamber_location": "",
+      "field_release_location": "",
+      "cdc_select_agent": false,
+      "absa_risk_group": "",
+      "absa_reference": "",
+      "cross_reference_notes": ""
+    }
+  ],
+  "project_summary": {
+    "project_goal": "To develop drought-resistant crop strains.",
+    "experimental_procedure": "Transforming Arabidopsis plants using Agrobacterium cultures via the floral dip method.",
+    "containment": "Standard BSL-1 practices, with bacterial culture preparation inside a biosafety cabinet.",
+    "protective_equipment": "Standard lab coats, safety glasses, and nitrile gloves.",
+    "transportation_methods": "Sealed, shatterproof secondary plastic bins for transport to the greenhouse.",
+    "decontamination_methods": "10% bleach solution on all benchtops.",
+    "waste_disposal": "Solid biological waste is autoclaved before standard disposal; liquid waste is bleached for 30 minutes before pouring down the sink.",
+    "spill_emergency_procedures": "Cover spill with paper towels, soak in 10% bleach, wait 20 minutes, then wipe up while wearing PPE."
+  }
+}

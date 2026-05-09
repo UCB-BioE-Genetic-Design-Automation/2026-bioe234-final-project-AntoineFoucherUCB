@@ -112,6 +112,48 @@ class BUAForm(BaseModel):
     biological_agents: List[BiologicalAgent] = Field(default_factory=list)
     project_summary: Optional[ProjectSummary] = Field(default_factory=ProjectSummary)
 
+
+def _merge_contact_fields_symmetric(left: ContactInfo, right: ContactInfo) -> ContactInfo:
+    out: dict[str, str] = {}
+    for fname in ContactInfo.model_fields:
+        va = str(getattr(left, fname, "") or "").strip()
+        vb = str(getattr(right, fname, "") or "").strip()
+        if va and vb:
+            out[fname] = va if len(va) >= len(vb) else vb
+        else:
+            out[fname] = va or vb
+    return ContactInfo(**out)
+
+
+def sync_pi_and_lab_contacts_inplace(form: BUAForm) -> None:
+    """
+    Recover from common LLM layout mistakes — without assuming PI ≡ lab contact for every BUA.
+
+    - If PI is blank but Lab Contact has a name, promote lab → PI (models often stash PI-only
+      answers under lab_contact_info).
+    - If both rows name the same person, merge non-empty fields both ways so details split across
+      stages still fill the form (explicit “I am PI and lab contact” flow).
+    - If Lab Contact is blank but PI is filled: do nothing here — the lab slot may belong to a
+      different person to be captured later (do not duplicate PI onto lab automatically).
+    """
+    pi = form.pi_info or ContactInfo()
+    lab = form.lab_contact_info or ContactInfo()
+
+    pi_n = (pi.name or "").strip().lower()
+    lab_n = (lab.name or "").strip().lower()
+
+    if not pi_n and lab_n:
+        form.pi_info = lab.model_copy(deep=True)
+        return
+
+    if pi_n and lab_n:
+        same = pi_n == lab_n or pi_n in lab_n or lab_n in pi_n
+        if same:
+            merged = _merge_contact_fields_symmetric(pi, lab)
+            form.pi_info = merged.model_copy(deep=True)
+            form.lab_contact_info = merged.model_copy(deep=True)
+
+
 # This is the global state object that will hold the data while the server runs
 current_bua_state = BUAForm()
 

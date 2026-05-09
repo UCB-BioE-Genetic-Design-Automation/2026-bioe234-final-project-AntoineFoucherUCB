@@ -31,6 +31,24 @@
   "examples": [
     {
       "input": {
+        "stage": "project_registration",
+        "raw_data": "{\"university\": \"State University\", \"state\": \"California\", \"bua_number\": \"12345\", \"project_title\": \"Viral Vector Analysis\"}"
+      },
+      "output": {
+        "status": "success",
+        "message": "Data successfully validated and saved for project_registration.",
+        "next_stage_to_fetch": "project_and_pi",
+        "current_state": {
+          "university": "State University",
+          "state": "California",
+          "bua_number": "12345",
+          "project_title": "Viral Vector Analysis",
+          "pi_info": { "name": "", "title": "" }
+        }
+      }
+    },
+    {
+      "input": {
         "stage": "project_info",
         "raw_data": "{\"university\": \"State University\", \"state\": \"California\", \"bua_number\": \"12345\", \"project_title\": \"Viral Vector Analysis\"}"
       },

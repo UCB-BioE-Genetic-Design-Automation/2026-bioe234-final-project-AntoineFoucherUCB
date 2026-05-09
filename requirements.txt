@@ -7,4 +7,6 @@ pymupdf
 python-docx
 docxtpl
 requests
-streamlit
+streamlit[pdf]
+mammoth
+docx2pdf>=0.1.8

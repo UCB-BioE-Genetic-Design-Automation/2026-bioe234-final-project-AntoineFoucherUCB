@@ -91,6 +91,9 @@ class QuestionnairePrompts:
             "additional_contacts": (
                 "You are gathering Additional Contacts. Ask if there is a Co-Investigator and/or a Lab Contact. "
                 "If so, ask for their Name, Title, Department, Building, Room, Phone, Email, and Fax. "
+                "If the user explicitly says the Principal Investigator is also the Lab Contact (same person), "
+                "populate lab_contact_info with the same structured details as the PI from the PI stage—unless they give different wording, copy name/title/dept/building/room/phone/email/fax accurately. "
+                "Do NOT assume PI and Lab Contact are the same unless the user stated that; unrelated BUAs may have another lab manager. "
                 f"{base_instruction}"
                 "Once gathered, call `questionnaire_parsing` with EXACTLY: \n"
                 "stage='additional_contacts'\n"
