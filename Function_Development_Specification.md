@@ -1,152 +1,73 @@
-# Function Development Specification
+# System Architecture & Function Documentation
 
-> **For students:** This document defines the required structure of your C9 JSON wrapper file
-> (e.g. `gc_content.json`). Every field listed under "Required Fields" must be present in your
-> `.json` file for full marks on the C9 Wrapper component. The two fields `mcp_name` and
-> `seq_params` inside `execution_details` are framework-specific additions used by this starter —
-> everything else follows the schema below exactly.
+This document outlines the internal architecture of the LLM-Powered Biological Use Authorization (BUA) Assistant. The system uses a Large Language Model (LLM) combined with the Model Context Protocol (MCP) to read, parse, validate, and render BUA forms.
 
 ---
 
-## Overview
+## 1. MCP Prompts
 
-This document specifies the required structure and authoring instructions for developing functions
-compatible with the C9 API. Functions are "Sharable" objects that support CRUD operations,
-querying, execution, and GUI display.
-
----
-
-## JSON Schema for Function Validation
-
-The following JSON schema validates function structure and enforces required fields. Each function
-must adhere to this schema to ensure compatibility.
-
-```json
-{
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Function",
-  "type": "object",
-  "properties": {
-    "id": {
-      "type": "string",
-      "description": "A unique identifier for the function."
-    },
-    "name": {
-      "type": "string",
-      "description": "A descriptive name of the function."
-    },
-    "description": {
-      "type": "string",
-      "description": "A brief summary of the function's purpose and functionality."
-    },
-    "type": {
-      "type": "string",
-      "enum": ["function"],
-      "description": "The type of object, which is always 'function'."
-    },
-    "keywords": {
-      "type": "array",
-      "items": { "type": "string" },
-      "description": "Keywords associated with the function to aid in searchability and categorization."
-    },
-    "date_created": {
-      "type": ["string", "null"],
-      "format": "date-time",
-      "description": "The creation date and time of the function."
-    },
-    "date_last_modified": {
-      "type": ["string", "null"],
-      "format": "date-time",
-      "description": "The last modified date and time of the function."
-    },
-    "inputs": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "name":        { "type": "string", "description": "The name of the input parameter." },
-          "type":        { "type": "string", "description": "The data type of the input parameter." },
-          "description": { "type": "string", "description": "A description of the input parameter." }
-        },
-        "required": ["name", "type", "description"]
-      },
-      "description": "A list of input parameters the function accepts."
-    },
-    "outputs": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "type":        { "type": "string", "description": "The data type of the output." },
-          "description": { "type": "string", "description": "A description of the output." }
-        },
-        "required": ["type", "description"]
-      },
-      "description": "A list of outputs the function produces."
-    },
-    "examples": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "input":  { "type": "object", "description": "Example input data for the function." },
-          "output": { "type": "object", "description": "Expected output data corresponding to the input." }
-        },
-        "required": ["input", "output"]
-      },
-      "description": "Sample inputs and expected outputs for testing and demonstration purposes."
-    },
-    "execution_details": {
-      "type": "object",
-      "properties": {
-        "language":       { "type": "string", "description": "Programming language used for writing the function." },
-        "source":         { "type": "string", "description": "Path to the source file containing the function's code." },
-        "initialization": { "type": "string", "description": "Method for initializing the function." },
-        "execution":      { "type": "string", "description": "Method for executing the function." },
-        "disposal":       { "type": "string", "description": "Method for cleanup after function execution." }
-      },
-      "required": ["language", "source", "execution"],
-      "description": "Details about the execution environment and methodology for the function."
-    }
-  },
-  "required": ["id", "name", "description", "type", "keywords", "inputs", "outputs", "examples", "execution_details"]
-}
-```
+* **MCP Prompts (`questionnaire_prompts`)** are **read-only context templates**. They are predefined instructions, system constraints, or structured data schemas injected into the LLM's context window *before* or *during* a conversation. Prompts guide the LLM's behavior and tell it *how* to think or format data. The LLM does not "execute" a prompt; it simply reads it.
+  * *Example:* The "Cheat Sheet" prompt we inject instructing the LLM to use the exact key `"biosafety_training"` instead of `"biosafety"` is an MCP Prompt.
 
 ---
 
-## Authoring a Function
+## 2. Core Prompts (MCP Prompts)
 
-1. **Function Naming**: Follow the ID naming convention:
-   `org.c9.function.[domain].[term].[specific_identifier].[version]`
-   where domain and term align with SKOS, FOAF, BioPortal, or similar ontologies. The
-   `specific_identifier` distinguishes each function, and `version` is optional.
+### `questionnaire_prompts`
+* **Purpose:** Defines the strict behavioral guidelines and JSON schema mapping rules ("Cheat Sheets") for the LLM. 
+* **Mechanism:** Handles the translation of physical document artifacts (like `■` and `□` checkboxes) into logical boolean values (`True`/`False`). It explicitly maps expected Python dictionary keys (e.g., `co_investigator_info`, `agent_state`) so the LLM formats its tool-call arguments precisely as the `questionnaire_parsing` Pydantic models expect them, preventing silent data drops.
 
-2. **Required Fields**:
-   - **ID**: A globally unique identifier for the function.
-   - **Name**: A concise but descriptive name.
-   - **Description**: Briefly outline the function's purpose and functionality.
-   - **Type**: Set as `"function"`.
-   - **Keywords**: Add relevant keywords for enhanced searchability.
-   - **Inputs**: Define each input parameter with `name`, `type`, and `description`.
-   - **Outputs**: List each output, including `type` and `description`.
-   - **Examples**: Provide sample inputs and expected outputs for testing.
-   - **Execution Details**: Specify the programming language, source file, initialization,
-     execution, and disposal methods.
+---
 
-3. **Execution Details Structure**:
-   - **Language**: Specify the programming language used.
-   - **Source**: File path or repository where the function code resides.
-   - **Execution**: Main function or method to invoke (`"run"` for this course).
-   - **Initialization** *(optional)*: Define if the function requires setup (`"initiate"`).
-   - **Disposal** *(optional)*: Specify cleanup if the function uses external resources.
+## 3. Core Agentic Tools (MCP Tools)
 
-4. **Version Control**: Add version information in the ID for version tracking.
+These are the registered tools the LLM can actively call during its execution loop.
 
-5. **C9 API Operations**:
-   Use standard C9 API calls for **Create**, **Read**, **Update**, **Delete**, **Query**,
-   **Run**, and **Show** operations. Functions are referenced by ID
-   (e.g. `"run": { "function_id": "string" }`) with parameters specified as `args`.
+### `questionnaire_parsing`
+* **Purpose:** The core data-mapping and validation engine. It prevents LLM hallucinations and generation-timeouts by forcing the model to process large BUA documents in sequential, bite-sized stages.
+* **Inputs:** * `stage` (str): The current form section (e.g., `'project_info'`, `'pi_info'`, `'biological_agents'`).
+  * `raw_data` (str): A JSON-formatted string containing the extracted data for that stage.
+* **Outputs:** Returns a JSON string containing a `status` (success/error), the `next_stage_to_fetch`, and a preview of the `current_state`.
+* **Under the Hood:** Evaluates the `raw_data` against strict Python Pydantic schemas. If the LLM provides invalid keys or types (e.g., passing a string for a boolean checkbox), this tool catches the error and returns a formatted validation error message so the LLM can correct itself.
 
-By following this specification and using the schema for validation, each function will be fully
-structured, documented, and compatible with C9's API functionality.
+### doc_parsing
+* **Purpose:** Acts as the document ingestion engine. It transforms user-uploaded draft BUA forms into clean, highly structured Markdown, preserving complex layouts like tables and checkboxes so the LLM doesn't lose critical context.
+* **Inputs:** * `file_path` (str): The absolute or relative path to the temporarily saved file (e.g., inside the uploads/ directory).
+* **Outputs:** Returns a formatted Markdown string containing the fully extracted text, automatically prepended with a header.
+* **Under the Hood:**Evaluates the file extension to read simple text files directly, but leverages Microsoft's MarkItDown library for complex binary formats (like .docx or .pdf) to intelligently translate visual tables, lists, and symbols into strict Markdown syntax.  
+This tool does not fill in the data structure from the uploaded document, the markdown text is actually sent to the LLM with specific instructions to fill it in using questionnaire_parsing. 
+
+### `bua_analysis`
+* **Purpose:** Acts as an automated Institutional Biosafety Committee (IBC) reviewer. It audits the finalized BUA data for compliance, logical inconsistencies, and safety risks.
+* **Inputs:** * `focus_area` (str): Specific area to audit (defaults to `"all"`).
+* **Outputs:** Returns a dictionary containing strict instructions for the LLM to generate an audit report, alongside the injected `campus_biosafety_practices` text and the `current_bua_data`.
+* **Under the Hood:** Automatically iterates through the `current_bua_state.biological_agents`, utilizes the `get_absa_data` utility to fetch official Risk Group classifications and extracts data from a document on biosafety practices, updates the state, and attaches local campus safety guidelines to ground the LLM's analysis.
+
+### `bua_render`
+* **Purpose:** Compiles the fully validated global state into a formatted Microsoft Word document.
+* **Inputs:** * `output_filename` (str): The desired name for the generated `.docx` file.
+* **Outputs:** Returns a status message and the absolute file path to the generated document.
+
+---
+
+## 4. Backend Internal Utilities
+
+These are standalone Python functions that power the application but are *not* directly exposed to the LLM.
+
+### `_utils.py`
+* **`convert_to_markdown(file_path)`:** A robust ingestion utility. It reads standard text files directly, but utilizes the Microsoft `MarkItDown` library to convert complex `.docx` and `.pdf` files into Markdown. This preserves vital structural context—such as tables and lists—which standard text extractors often destroy.
+* **`get_absa_data(scientific_name, top_k)`:** A local database retrieval script. 
+  * **Mechanism:** It tokenizes and normalizes biological agent queries (handling edge cases like "subsp."), then scans a local `absa_db.csv` for exact or close matches using `difflib`. It calculates a match score and returns the agent's risk group across multiple international regulatory bodies (NIH, BMBL, Canada PSDS, etc.).
+
+---
+
+## 5. Frontend Orchestration
+
+### `streamlit_app.py`
+* **Purpose:** The user-facing web interface and state-manager.
+* **Key Features:**
+  * **State Management:** Maintains the chat history, current application mode (upload vs. fresh), and the global `current_bua_state` across multi-threaded browser interactions.
+  * **File Ingestion:** Handles file uploads and seamlessly passes the temporary file paths to `convert_to_markdown`.
+  * **Prompt Injection:** Dynamically constructs the prompt to extract the uploaded document (converted to markdown) combining the parsed document text with the `questionnaire_prompts` schema rules.
+  * **Thread-Safe PDF Rendering:** Utilizes `pythoncom.CoInitialize()` and `docx2pdf` to safely spin up Windows Component Object Model (COM) threads. This ensures the app can generate layout-faithful PDF previews of the rendered Word documents without crashing Streamlit's asynchronous background workers.
+

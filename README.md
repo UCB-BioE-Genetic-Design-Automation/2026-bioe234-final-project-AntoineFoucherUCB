@@ -1,538 +1,129 @@
-# BioE234 MCP Starter — Student Guide
-
-Welcome! This document is the **primary reference** for the final project starter.  
-Read it top to bottom once before writing any code.
-
+# BUA Automation Tool: BioE234 Final Project
+**Authors:** Antoine Foucher (@antoineFoucher) & Brandon (@BrandoISThy-Berkeley)
+This project leverages the Model Context Protocol (MCP) framework to automate the generation and analysis of Biological Use Authorization (BUA) documents. By integrating an AI assistant with specialized bioengineering tools, this application streamlines the process of filling out complex safety templates and cross-referencing biosafety data.
 ---
-
-## 1. What is this starter?
-
-This repository is a framework for building **bioengineering automation tools** that an AI assistant can call via **MCP (Model Context Protocol)**.
-
-The framework handles connecting your Python codes to the AI.
-
-### Four design principles
-
-1. **You write pure Python** — biology logic only, no networking or MCP code required.  
-2. **Convention over configuration** — the framework auto-discovers your files by name.  
-3. **No plumbing in your tool files** — you never import MCP or registration code.  
-4. **Copy >> modify >> extend** — start from the examples and edit them.
-
+## Project Overview
+The system allows users to upload existing BUA documents or answer questionnaires
+through a Streamlit GUI (**IMPORTANT**: the proper activation of our tools is with ‘streamlit run streamlit_app.py’ and not ‘python client_gemini.py’). The AI then processes this information to populate a structured BUA data format, performs risk analysis using external databases, and
+generates a completed `.docx` file for submission.
 ---
-
-## 2. Project structure
-
-```
-.
-├── server.py                      # MCP server — do not edit
-├── client_gemini.py               # Gemini CLI client — do not edit
-├── requirements.txt
-├── pytest.ini
-│
-├── tests/
-│   ├── conftest.py
-│   ├── test_bua_analysis.py
-│   ├── test_bua_render.py
-│   ├── test_doc_parsing.py
-│   ├── test_questionnaire_parsing.py
-│   ├── test_questionnaire_prompts.py
-│   └── test_seq_basics_tools.py
-│
-└── modules/
-    ├── __init__.py                # Scans all sub-modules — do not edit
-    │
-    └── seq_basics/                # EXAMPLE MODULE (copy this for your project)
-        ├── __init__.py
-        ├── SKILL.md               # AI guidance for this module (optional)
-        ├── _utils.py              # Shared constants (codon table, etc.)
-        ├── _plumbing/             # Auto-registration internals — do not edit
-        │   ├── __init__.py
-        │   ├── register.py
-        │   └── resolve.py
-        ├── data/
-        │   └── pBR322.gb          # Sequence data files go here
-        └── tools/
-            ├── reverse_complement.py    # Example: Python implementation
-            ├── reverse_complement.json  # Example: C9 JSON wrapper
-            ├── translate.py
-            ├── translate.json
-            └── prompts.json             # Example test prompts
-```
-
-> **Where you spend your time:** `modules/<your_module>/tools/` and `modules/<your_module>/data/`.
-
+## Submission Structure & Tool Interdependency
+While the course guidelines often suggest individual repositories, our team has
+opted for a joint repository submission. This decision was made because the BUA
+Automation Tool is built as a cohesive, sequential pipeline where each tool
+relies on the infrastructure and outputs of the previous one. The project
+operates as a unified system rather than a collection of isolated scripts:
+* **Sequential Workflow:** The process begins with the initial tool logic and
+data structure (built by Antoine), which is then processed through the
+specialized analysis and database cross-referencing tools (built by Brandon).
+* **Integrated Infrastructure:** The Streamlit GUI serves as the central hub,
+orchestrating the interaction between Antoine’s BUA data structures and Brandon's
+ABSA retrieval functions to provide a seamless user experience.
+* **Shared MCP Framework:** Both members contributed to the same `tools/` and
+`modules/` directories to ensure the MCP server could correctly auto-discover and
+register the full suite of interdependent tools.
+By maintaining a single repository, we ensure the full functionality of the
+automation pipeline—from questionnaire input to final `.docx` generation—is
+preserved and verifiable through our shared test suite.
 ---
+## Team Contributions
 
-## 3. How the pipeline works
-
-```
-python client_gemini.py
-        │
-        ├─► launches server.py as a subprocess
-        │         │
-        │         └─► scans modules/  (one folder per project)
-        │                   └─► for each folder: reads .py + .json pairs, registers tools
-        │                                         reads .gb / .fasta files, registers resources
-        │
-        ├─► connects to server, lists tools and resources
-        │
-You:    └─► type a request
-                │
-                ▼
-            Gemini decides which tool to call and with what arguments
-                │
-                ▼
-            server calls your Python function
-                │
-                ▼
-            result returned to Gemini, which explains it to you
-```
-
+### Antoine Foucher (@antoineFoucher)
+* **Core Architecture:** Implemented the initial versions of all project tools
+that served as the foundation for further development.
+* **Data Modeling:** Expanded the BUA data structure to encompass every field
+found in the comprehensive BUA empty template.
+* **Document Generation:** Modified the BUA `.docx` template system to allow for
+dynamic completion of documents directly from the internal data structures.
+* **Prompt Engineering:** Refined questionnaire_prompts and questionnaire_parsing logic to ensure the entirety of the BUA content is accurately captured and processed.
+* **Tool Optimization:** Refactored `ABSA_retrieval` from a standalone tool into
+a helper function within `bua_analysis` to minimize tool-call overhead and
+simplify the MCP interface.
+* **Streamlit Integration:** Enabled direct BUA file uploads within the app and
+developed the logic to instantiate a data structure directly from those uploaded
+Files. Corrected the errors related to pdf preview generation.
+### Brandon (@BrandoISThy-Berkeley)
+* **Analysis Logic:** Enhanced the questionnaire prompts and the core
+`bua_analysis` tool for higher accuracy and depth.
+* **Database Integration:** Implemented the connection to the ABSA (American
+Biological Safety Association) dataset. Due to the lack of a public API,
+extracted and integrated a database pulled from the Risk Group Database APK to
+facilitate cross-referencing during the analysis phase.
+* **Frontend Development:** Designed and built the entire Streamlit GUI, focusing
+on user interaction, visual design, and a custom document viewer that allows
+users to visualize the generated `.docx` file without needing to download it
+first.
+* **Data Conversion:** Developed the logic for the Streamlit upload tool to
+successfully convert uploaded BUA files into the JSON-defined BUA data structure.
+* **Quality Assurance:** Built a comprehensive suite of pytests for every tool in
+the repository to ensure reliability.
+* **MCP Integration:** Implemented the `prompts.json` file to define and test the
+natural-language triggers for the AI assistant.
 ---
+## System Architecture & Core Tools
+### `doc_parsing` (Document Ingestion)
+* **Purpose:** Transforms user-uploaded draft BUA forms into clean, highly
+structured Markdown, preserving complex layouts like tables and checkboxes.
+Leverages Microsoft's `MarkItDown` library.
+### `questionnaire_parsing`
+* **Purpose:** The core data-mapping and validation engine. Prevents LLM
+hallucinations by forcing the model to process large BUA documents in sequential
+stages validated against strict Pydantic schemas.
 
-## 4. Quick start
+### `bua_analysis`
+* **Purpose:** Acts as an automated Institutional Biosafety Committee (IBC)
+reviewer. Automatically iterates through biological agents, utilizes the ABSA
+dataset to fetch official Risk Group classifications, and attaches local campus
+safety guidelines to ground the LLM's analysis.
+### `bua_render`
+* **Purpose:** Compiles the fully validated global state into a formatted
+Microsoft Word document, leveraging thread-safe Windows COM initialization
+(`pythoncom.CoInitialize()`) for dynamic layout-faithful PDF previews in
+Streamlit.  
 
-### Step 0 — Prerequisites
-- Python 3.10 or newer
-- Visual Studio Code — [code.visualstudio.com](https://code.visualstudio.com)
-
-### Step 1 — Create a virtual environment
-
-Open a terminal in VS Code (`Terminal >> New Terminal`):
-
+More information can be found in ‘functions_documentation.md’
+---
+## Project Structure
+Following the BioE234 MCP Starter conventions:
+* `modules/`: Contains the biology logic and tool definitions.
+* `tools/`: Python implementations and their corresponding JSON wrappers, as well as test prompts for each tool.
+* `data/`: Architecture of the BUA data structure and documentation on biosafety measures or ABSA-defined risk level for most biological agents.
+* `resources/`: template of an empty BUA form. **IMPORTANT TO NOTE**: This template was taken from the one used by Auburn University in Alabama. If one wanted to use these MCP tools for their own university, they would have to adjust the template and the code to fit the new template. 
+* `generated_docs/`: Output directory for completed BUA documents.
+Then there are some extra files:
+* ‘Filled_BUA_to_upload.docx’: Filled in BUA form useful for testing the ‘upload’ functionality. 
+---
+## Setup and Installation
+1. **Environment:** Create a virtual environment and install dependencies.
 ```bash
-python -m venv .venv
-source .venv/bin/activate        # Mac / Linux
-# .venv\Scripts\activate         # Windows
-```
-
-You should see `(.venv)` at the start of your terminal line. Then install dependencies:
-
-```bash
+python -m venv venv
+source venv/bin/activate # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
-
-### Step 2 — Get your Gemini API key
-
-1. Go to **[https://aistudio.google.com/api-keys](https://aistudio.google.com/api-keys)**
-2. Sign in with your **UC Berkeley Google account** (free access is included).
-3. Click **"Create API Key"** and copy the key.
-4. In the project root folder, create a file named exactly **`.env`** containing:
-
+2. **API Key:** Add your Google Gemini API key to a `.env` file in the root
+directory.
+```env
+GEMINI_API_KEY=your_api_key_here
 ```
-GEMINI_API_KEY="paste_your_key_here"
-```
-
-> 🔴 **Security warning:** Never upload `.env` to GitHub. Ensure `.env` is listed in `.gitignore`. 
-Run this in your project folder: 
-> echo ".env" >> .gitignore
-
-### Step 3 — Run the client
-
+3. **Run:** Launch the Streamlit application or the MCP client to interact with
+the tools.
 ```bash
-python client_gemini.py
+streamlit run app.py
 ```
-
-Expected output:
-```
-[server] Starting BioE234 MCP server...
-[register] ✓ Tool registered:    dna_reverse_complement
-[register] ✓ Tool registered:    dna_translate
-[register] ✓ Resource registered: pBR322  (...)
-[server] All modules registered. Server ready.
-
-Connected to MCP server.
-Discovered tools:
-  - dna_reverse_complement: Return the reverse complement of a DNA sequence...
-  - dna_translate: Translate DNA to protein...
-```
-
-Try typing:
-```
-Translate the first 60bp of pBR322 in frame 1
-```
-
-Then you should get:
-```
-Gemini: The first 60bp of pBR322 translated in frame 1 is FSCLTAYHR*ALMR*FITVK.
-```
-
 ---
+### How to test the tools ?  
+In addition to the test prompts, we invite you to try the tools by yourself. Below are some helping prompts and documentation for this purpose.
+
+**Questionnaire for BUA generation**
+Instead of writing your own prompts, you can copy and paste each prompt found below for each question that the LLM asks. The information provided in the answers below are intentionally not all right, so you can conduct a BUA analysis after finishing the questionnaire, then generate a BUA form.
+**Answer 1 (Project info)**: Yes, I'm ready to start. The BUA number is 1234. The project title is 'CRISPR-Cas9 Mediated Gene Silencing in Arabidopsis thaliana'. I am at State University in Kentucky.   
+**Answer 2 (PI Information)**: I am the PI, Dr. Aris Thorne. My title is Associate Professor in the Department of Plant Biology. You can find me in the Greenleaf Sciences Building, Room 402. My phone number is 555-0198, and my email is athorne@university.edu. I don't really use a fax machine, so you can just leave that blank.  
+**Answer 3 (Additional Contacts)**: Yes, I have a Co-Investigator on this project. Her name is Dr. Elena Rostova, and she's a Research Scientist also in the Plant Biology department. She's located over in the Ag-Tech Building, Room 115. Her phone is 555-0234 and her email is erostova@university.edu. I serve as both the lab contact and PI, so you can put my information.  
+**Answer 4 (Personnel)**: For my lab personnel, I have two graduate student researchers from Biology dept working on this. First is Mark Lewis, his phone is 555-0301. He has completed his general Biosafety training and his Medical Waste training, but he hasn't done Bloodborne Pathogens yet because we don't work with human blood in our lab. The second student is Sarah Jenkins, phone 555-0302. She just joined the lab last week, so she has only finished her Biosafety training so far. Leave their emails blank, they can be reached via phone.  
+**Answer 5 (Room Usage)**: We will primarily be using two rooms. The first is Greenleaf Sciences Room 402, which is our main lab. It's not shared with anyone else. It's a BSL-1 facility used for both research and storage. We do have a biosafety cabinet and an autoclave in there, but we don't handle medical waste or house animals. The second room is the Ag-Tech Greenhouse, Room G-10. That one is shared, also BSL-1, and used strictly for research and growing the plants. No BSC, autoclave, medical waste, or animals in there. And no, we don't need IACUC or IRB approval since we're just working with plants and bacteria.  
+**Answer 6 (Biological Agents)**: Our first biological agent is Agrobacterium tumefaciens. I guess the common name is just crown gall bacterium. It is indigenous to our state, and we maintain an active culture of it in the lab, sometimes we keep it frozen too. Since it's indigenous, we didn't need to get an APHIS permit, and it's definitely not a CDC select agent! We'll be using it in the Greenleaf 402 laboratory and then transferring the modified plants to the Ag-Tech Greenhouse. The second biological agent is  Escherichia coli. The common name is just E. coli. It is highly indigenous—found practically everywhere—so we obviously don't need an APHIS permit for it, and it is definitely not a CDC select agent. We mostly maintain it as an active liquid culture, though we have frozen glycerol stocks as well. We will be doing the primary handling in the Molecular Bio Lab 104, and the cultures will be grown overnight in the shared Incubator Room 106.  
+**Answer 7 (Project Summary)**: The project goal is to develop drought-resistant crop strains. Our experimental procedure involves transforming Arabidopsis plants using our Agrobacterium cultures via the floral dip method. For containment, we use standard BSL-1 practices, though we prep the bacterial cultures inside the biosafety cabinet. We wear standard lab coats, safety glasses, and nitrile gloves but no shoes. When moving plants to the greenhouse, we transport them in sealed, shatterproof secondary plastic bins. For decontamination, we use methanol and ingest it directly. If there's a spill, our procedure is to cover it with paper towels, soak it in 10% bleach, wait 20 minutes, and then wipe it up while wearing our PPE.  
+**BUA upload**
+In the repository’s main body is a file called “Filled_BUA_to_upload.docx”.You can upload this document in the streamlit app. This document also intentionally presents some biological errors, so you can ask the LLM to perform an analysis and render a corrected BUA form.
 
-## 5. Each tool is TWO files
 
-For every tool you build you create **two files with the same stem name** in your `tools/` folder:
-
-```
-gc_content.py     ← Python implementation (the biology logic)
-gc_content.json   ← C9 JSON wrapper      (the metadata / schema)
-```
-
-**There is no third "wrapper" file.** The `.json` file *is* your C9 wrapper. It is what the grading rubric means when it says "C9 Wrapper". The Python file holds only biology code — no MCP-specific code at all.
-
----
-
-## 6. The Python file - Function Object Pattern
-
-Your Python file must follow the **Function Object Pattern**: a class with `initiate()` and `run()` methods, and a structured docstring. This is the same pattern used throughout the course.
-
-- **`initiate()`** — one-time setup (build lookup tables, load config, etc.)
-- **`run()`** — the actual computation; called once per tool invocation
-
-### Template
-
-```python
-class GcContent:
-    """
-    Description:
-        Computes the fraction of G and C bases in a DNA sequence.
-
-    Input:
-        seq (str): DNA sequence (resource name or raw string).
-
-    Output:
-        float: GC fraction between 0.0 and 1.0.
-
-    Tests:
-        - Case:
-            Input: seq="ATGCATGC"
-            Expected Output: 0.5
-            Description: Balanced sequence, 50% GC.
-        - Case:
-            Input: seq="AAAA"
-            Expected Output: 0.0
-            Description: All A bases, 0% GC.
-        - Case:
-            Input: seq=""
-            Expected Output: 0.0
-            Description: Edge case — empty sequence returns 0.
-    """
-
-    def initiate(self) -> None:
-        pass   # nothing to set up for this tool
-
-    def run(self, seq: str) -> float:
-        """Return GC fraction between 0 and 1."""
-        seq = seq.upper()
-        gc = sum(1 for b in seq if b in "GC")
-        return gc / len(seq) if seq else 0.0
-
-
-# Optional: module-level alias so pytest can import the function directly.
-_instance = GcContent()
-_instance.initiate()
-gc_content = _instance.run   # gc_content("ATGC") → 0.5
-```
-
-### Naming rule — critical
-
-> ⚠️ **Name your file after what it does, not `bio_functions.py`.**  
-> If every student uses `bio_functions.py`, files will conflict.
-
-Good names: `gc_content.py`, `find_pam_sites.py`, `design_primers.py`, `codon_count.py`
-
-The **class name** can be anything descriptive. The **file name** is what you use in the JSON wrapper's `execution_details.source`.
-
-### Rules
-- Always add type hints: `seq: str`, `frame: int`, `pam: str = "NGG"`, etc.
-- Return JSON-serialisable values: `str`, `int`, `float`, `list`, `dict`.
-- Raise `ValueError` with clear messages for invalid inputs.
-- Never `print()` inside a tool — return values instead.
-
----
-
-## 7. The JSON file — C9 wrapper
-
-The `.json` file formally describes your tool. It follows the schema in [`Function_Development_Specification.md`](Function_Development_Specification.md) and is what the grader evaluates as the "C9 Wrapper" component.
-
-### Template
-
-```json
-{
-  "id": "org.bioe234.function.seq.gc_content.v1",
-  "name": "DNA GC Content",
-  "description": "Compute the GC content (fraction of G and C bases) of a DNA sequence.",
-  "type": "function",
-  "keywords": ["DNA", "GC content", "sequence analysis"],
-  "date_created": null,
-  "date_last_modified": null,
-
-  "inputs": [
-    {
-      "name": "seq",
-      "type": "string",
-      "description": "DNA sequence. Accepts a resource name (e.g. 'pBR322') or a raw sequence string."
-    }
-  ],
-
-  "outputs": [
-    {
-      "type": "number",
-      "description": "GC fraction between 0.0 (no GC) and 1.0 (all GC)."
-    }
-  ],
-
-  "examples": [
-    {
-      "input":  { "seq": "ATGCATGC" },
-      "output": { "result": 0.5 }
-    },
-    {
-      "input":  { "seq": "AAAA" },
-      "output": { "result": 0.0 }
-    }
-  ],
-
-  "execution_details": {
-    "language": "Python",
-    "source": "modules/seq_basics/tools/gc_content.py",
-    "initialization": "initiate",
-    "execution": "run",
-    "disposal": null,
-
-    "mcp_name": "dna_gc_content",
-    "seq_params": ["seq"]
-  }
-}
-```
-
-### Required fields
-
-| Field | Notes |
-|-------|-------|
-| `id` | Unique ID in the format `org.bioe234.function.<domain>.<name>.v1` |
-| `name` | Human-readable display name |
-| `description` | One clear sentence describing what the tool does |
-| `type` | Always `"function"` |
-| `keywords` | List of relevant terms |
-| `inputs` | Array — each entry needs `name`, `type`, `description` |
-| `outputs` | Array — each entry needs `type`, `description` |
-| `examples` | Array — at least one `{input, output}` pair |
-| `execution_details.language` | `"Python"` |
-| `execution_details.source` | Path to your `.py` file |
-| `execution_details.execution` | `"run"` |
-| `execution_details.mcp_name` | The tool identifier Gemini will use (snake_case) |
-
-`execution_details.mcp_name` and `execution_details.seq_params` are framework-specific extensions — they exist inside `execution_details` because they are about how your code runs, not what it does biologically.
-
-### Supported input/output types
-`string`, `integer`, `number`, `boolean`, `array`, `object`
-
----
-
-## 8. Tools with multiple input parameters
-
-```python
-# hamming_distance.py
-class HammingDistance:
-    def initiate(self): pass
-    def run(self, seq1: str, seq2: str) -> int:
-        if len(seq1) != len(seq2):
-            raise ValueError("Sequences must have equal length.")
-        return sum(a != b for a, b in zip(seq1, seq2))
-```
-
-In your JSON, list both names under `seq_params`:
-
-```json
-"execution_details": {
-  ...,
-  "mcp_name": "dna_hamming_distance",
-  "seq_params": ["seq1", "seq2"]
-}
-```
-
-Both `seq1` and `seq2` can be resource names or raw sequences.
-
----
-
-## 9. Non-sequence tools
-
-If your tool does not take a DNA/RNA sequence, **omit `seq_params`** entirely:
-
-```python
-# restriction_site_count.py
-class RestrictionSiteCount:
-    def initiate(self): pass
-    def run(self, dna: str, site: str) -> int:
-        return dna.upper().count(site.upper())
-```
-
-```json
-"execution_details": {
-  "language": "Python",
-  "source": "modules/seq_basics/tools/restriction_site_count.py",
-  "initialization": "initiate",
-  "execution": "run",
-  "mcp_name": "dna_restriction_site_count"
-}
-```
-
----
-
-## 10. How sequences are resolved automatically
-
-When a parameter is listed in `seq_params`, the framework automatically converts it before your `run()` is called:
-
-| What you pass | What `run()` receives |
-|---|---|
-| `"pBR322"` | Full 4361bp sequence string |
-| `">seq1\nATGC..."` | `"ATGC"` |
-| `"LOCUS pBR322 ..."` | Full sequence string |
-| `"ATGCGATCG"` | `"ATGCGATCG"` |
-| `"ATG CGA\n1 TCG"` | `"ATGCGATCG"` (whitespace/numbers stripped) |
-
-Your function always receives a clean uppercase string. No file parsing needed.
-
----
-
-## 11. Adding sequence data files
-
-Drop `.gb` or `.fasta` files into `modules/<your_module>/data/`. Restart the server and they are immediately available as resources.
-
-```
-data/
-  pBR322.gb       →  resource name "pBR322"
-  mg1655.fasta    →  resource name "mg1655"
-```
-
----
-
-## 12. Test prompts — prompts.json
-
-You must submit a `prompts.json` file alongside your tool. Each entry is a natural-language prompt a user might type, paired with the expected tool call. See **`modules/biosafety/tools/prompts.json`** (course BUA MCP tools) and **`modules/seq_basics/tools/prompts.json`** (starter seq tools). Use the MCP tool identifiers from each tool’s `.json` wrapper (`execution_details.mcp_name` when present; otherwise `"name"`).
-
-```json
-[
-  {
-    "prompt": "What is the GC content of ATGCATGC?",
-    "expected_tool": "dna_gc_content",
-    "expected_args": { "seq": "ATGCATGC" },
-    "notes": "Basic raw sequence input."
-  }
-]
-```
-
----
-## 13. SKILL.md — Guiding the AI
-
-Each module can contain a `SKILL.md` file. When found, its contents are automatically
-injected into Gemini's system prompt at startup, giving the AI background knowledge
-it needs to use your tools correctly.
-
-**Is it required?** No. The system works without it. But without it, Gemini has only the
-short `description` fields from your `.json` wrappers to go on. A good `SKILL.md`
-meaningfully improves the quality of Gemini's responses — it knows what your resources
-contain, how to interpret results, and what edge cases to watch for.
-
-**What to put in it:**
-- What the module does in one paragraph
-- A table of your resources and what they contain
-- For each tool: when to use it, what the parameters mean, how to interpret the output
-- Any domain vocabulary or biological context Gemini needs
-
-**Template** — create `modules/<your_module>/SKILL.md`:
-
-```markdown
-# <your_module> — Skill Guidance for Gemini
-
-## What this module does
-One paragraph describing the biological domain and purpose of this module.
-
-## Available resources
-| Resource name | Description |
-|---------------|-------------|
-| `my_genome`   | E. coli K-12 MG1655 complete genome, 4.6 Mbp. |
-
-## Tools and when to use them
-
-### `my_tool_mcp_name`
-What it computes and when Gemini should call it.
-- Trigger phrases: "find X", "scan for Y", "does this sequence contain Z"
-- Parameter notes: what each parameter means in plain language
-- Output notes: how to interpret the result
-
-## Interpreting results
-Any domain knowledge that helps Gemini explain results correctly.
-```
-
-**See `modules/seq_basics/SKILL.md` for a complete working example.**
-
-> **Token budget:** SKILL.md is included in every request. Keep it under ~300 lines.
-> Long files increase cost and can push other context out of Gemini's window.
-
----
-
-
-
-## 14. Creating your own module
-
-```
-modules/
-  <your_module>/
-    __init__.py          ← copy from seq_basics/ (can be empty)
-    SKILL.md             ← describe what this module does for the AI
-    data/
-      my_genome.gb       ← example data
-    tools/
-      find_pam.py        ← example tool 1
-      find_pam.json      ← example json file for tool 1
-      prompts.json       ← example tool 2
-      test_find_pam.py   ← example json file for tool 2
-```
-
-`modules/__init__.py` auto-discovers new folders — you do not need to edit it.
-
----
-
-## 15. Running tests
-
-From the repo root (`modules/` and `pytest.ini`):
-
-```bash
-pytest -vv -l
-```
-
-**`pytest.ini`** sets `pythonpath = .` and `testpaths = tests`; **`tests/conftest.py`** also ensures the repo root is on `sys.path` during collection.
-
-Examples live under **`tests/`** (e.g. `test_questionnaire_parsing.py`, `test_doc_parsing.py`; **`test_seq_basics_tools.py`** shows the module-level callable pattern).
-
----
-
-## 16. What to submit
-
-| File | Grading component |
-|------|------------------|
-| `<tool_name>.py` | Function Code |
-| `<tool_name>.json` | C9 Wrapper |
-| `prompts.json` | Test Prompts |
-| `test_<tool_name>.py` | Pytest |
-| `README.md` | Documentation |
-| `<your_functions_docs>.md` | Theory Docs |
-
-Submit your GitHub repo URL on bCourses. The repo should reflect your **individual** contribution, not the whole team's work.
-
----
-
-## 17. Troubleshooting
-
-**Tool doesn't appear after startup**  
-Look for `[register] WARNING` lines in the terminal. The message will say exactly what is missing — usually a `.json` wrapper file, a missing `run()` method, or a malformed JSON.
-
-**API key error**  
-Ensure `.env` is in the project root (not a subfolder) and contains `GEMINI_API_KEY="..."`. Restart the terminal after creating the file.
-
-**Gemini 503**  
-Server busy. Wait 30 seconds — the client retries automatically.
-
-**`python` not found**  
-Use `python3` on Mac/Linux.
-
-**`ModuleNotFoundError`**  
-Activate your virtual environment first: `source .venv/bin/activate`.
-
----
-
-## Still stuck?
-
-Email your TA: **javadamn@berkeley.edu**
