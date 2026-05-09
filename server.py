@@ -13,7 +13,7 @@ import sys
 from fastmcp import FastMCP
 from modules import register_all
 
-from modules.seq_basics._plumbing import resolve
+from modules.biosafety._plumbing import resolve
 
 mcp = FastMCP(
     "BioE234 MCP Starter",

@@ -6,8 +6,26 @@ This document outlines the internal architecture of the LLM-Powered Biological U
 
 ## 1. MCP Prompts
 
-* **MCP Prompts (`questionnaire_prompts`)** are **read-only context templates**. They are predefined instructions, system constraints, or structured data schemas injected into the LLM's context window *before* or *during* a conversation. Prompts guide the LLM's behavior and tell it *how* to think or format data. The LLM does not "execute" a prompt; it simply reads it.
-  * *Example:* The "Cheat Sheet" prompt we inject instructing the LLM to use the exact key `"biosafety_training"` instead of `"biosafety"` is an MCP Prompt.
+In the Model Context Protocol (MCP), a **Prompt** is a read-only set of
+instructions injected into the LLM's context *before* it executes a tool. If a
+Python Tool is a locked door, the Prompt is the blueprint for cutting the exact
+key needed to open it.
+### 1. Translating Visuals to Data
+When the LLM reads the extracted document Markdown, it sees characters, not
+logic. The prompt explicitly instructs the LLM to translate visual checkboxes
+(like `■` and `□`) into programmable boolean values (`True` / `False`) before
+passing them to the backend.
+### 2. Enforcing Strict Schemas
+LLMs are notoriously creative and might change data labels (e.g., changing
+`"co_investigator_info"` to `"copis"`). This causes Pydantic validation tools to
+fail. The `questionnaire_prompts` feed the LLM a strict "Cheat Sheet" of exact
+dictionary keys it must use, preventing fatal errors.
+### 3. The Workflow
+1. **Ingest:** The user uploads a `.docx`, which is converted to Markdown.
+2. **Inject:** The system fetches `questionnaire_prompts` and feeds them to the
+LLM alongside the Markdown text.
+3. **Execute:** Guided by these strict rules, the LLM extracts the data, formats
+it into perfect JSON, and safely triggers the `questionnaire_parsing` tool.
 
 ---
 

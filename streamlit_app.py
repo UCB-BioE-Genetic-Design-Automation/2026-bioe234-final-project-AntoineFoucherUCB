@@ -585,7 +585,7 @@ def main() -> None:
             if not st.session_state.upload_processed:
                 with st.spinner("Extracting text from document..."):
                     # 2. Extract the text right here in Streamlit!
-                    # (You can also import and use your convert_docx_to_markdown here instead)
+                    # (You can also import and use your convert_to_markdown here instead)
                     extracted_text = _docx_to_text(out_path)
                     
                     # 3. Inject the actual text directly into the LLM prompt

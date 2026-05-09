@@ -1,5 +1,5 @@
 import os
-from modules.biosafety._utils import convert_docx_to_markdown 
+from modules.biosafety._utils import convert_to_markdown
 
 class DocParsing:
     def initiate(self):
@@ -19,7 +19,7 @@ class DocParsing:
                 }
 
             # 2. Convert the .docx to markdown using your utility
-            document_text = convert_docx_to_markdown(file_path)
+            document_text = convert_to_markdown(file_path)
 
             # 3. Return the text to the LLM so it can begin extraction
             return {
