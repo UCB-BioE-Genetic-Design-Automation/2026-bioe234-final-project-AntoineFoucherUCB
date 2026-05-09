@@ -290,7 +290,7 @@ def _render_start_screen() -> None:
         st.markdown("### upload file (docx)")
         st.caption("Upload an existing BUA draft and extract it into state.")
         st.caption(
-            "In this workflow, 'extract data' means producing the raw JSON data-structure "
+            "In this workflow, 'form data structure' means producing the raw JSON data-structure "
             "representation of the BUA (not rendering yet)."
         )
         if st.button("upload file (docx)", use_container_width=True):
@@ -579,9 +579,10 @@ def main() -> None:
                     kickoff = (
                         "I have uploaded a BUA document. Here is the full text extracted from it:\n\n"
                         f"--- START OF DOCUMENT ---\n{extracted_text}\n--- END OF DOCUMENT ---\n\n"
-                        "Please read this document and simply reply with: 'Document received and read. I am ready to begin extracting the data.' "
-                        "Here, 'extracting the data' means creating the raw JSON data-structure representation of this BUA. "
-                        "Do NOT call any tools yet."
+                        "Please extract this data and save it to the state using the 'questionnaire_parsing' tool. "
+                        "You must call the tool sequentially, using ONLY these exact stage names: "
+                        "'project_info', 'pi_info', 'additional_contacts', 'personnel', 'room_usage', "
+                        "'biological_agents', and 'project_summary'. Do not invent new stage names."
                     )
                     
                     # 4. Send the prompt + text to the LLM
