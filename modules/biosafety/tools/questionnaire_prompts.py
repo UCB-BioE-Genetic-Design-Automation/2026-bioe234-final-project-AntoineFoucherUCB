@@ -7,9 +7,10 @@ _STAGE_ALIASES = {
     "begin": "start",
     "intro": "start",
     "first": "start",
-    "lab_identity": "project_and_pi",
-    "pi_info": "project_and_pi",
-    "project_pi": "project_and_pi",
+    "lab_identity": "project_info",
+    "project": "project_info",
+    "pi": "pi_info",
+    "principal_investigator": "pi_info"
 }
 
 
@@ -71,19 +72,19 @@ class QuestionnairePrompts:
         self.prompts = {
             "start": (
                 "Welcome the user to the BUA generator and explain that you will guide them through the form. "
-                "Then, IMMEDIATELY transition into the 'project_and_pi' stage. Ask the user for their BUA Number (if known), Project Title,"
-                "what university they are at, and which US state that university is in."
+                "Ask the user for their BUA Number (if known), Project Title, what university they are at, "
+                "and which US state that university is in."
                 f"{base_instruction}"
-                "Once you have gathered ALL of this info (or the user has given all they know), call `questionnaire_parsing` with EXACTLY: "
-                "stage='project_and_pi'\n"
+                "Once you have gathered ALL of this info (or the user has given all they know), call `questionnaire_parsing` with EXACTLY: \n"
+                "stage='project_info'\n"
                 "raw_data=A JSON string containing 'university' (str), 'state' (str), 'bua_number' (str), 'project_title' (str)"
             ),
             
-            "project_and_pi": (
-                "You are gathering PI Information. Ask the user for the PI's Name, Title, Department, Building, Room, Phone, Email, and Fax. "
+            "pi_info": (
+                "You are gathering PI Information. Ask the user for the Principal Investigator's Name, Title, Department, Building, Room, Phone, Email, and Fax. "
                 f"{base_instruction}"
-                "Once gathered, call `questionnaire_parsing` with EXACTLY: "
-                "stage='project_and_pi'\n"
+                "Once gathered, call `questionnaire_parsing` with EXACTLY: \n"
+                "stage='pi_info'\n"
                 "raw_data=A JSON string containing 'pi_info' (object with keys: name, title, department, building, room, phone, email_address, fax)."
             ),
             
@@ -91,7 +92,7 @@ class QuestionnairePrompts:
                 "You are gathering Additional Contacts. Ask if there is a Co-Investigator and/or a Lab Contact. "
                 "If so, ask for their Name, Title, Department, Building, Room, Phone, Email, and Fax. "
                 f"{base_instruction}"
-                "Once gathered, call `questionnaire_parsing` with EXACTLY: "
+                "Once gathered, call `questionnaire_parsing` with EXACTLY: \n"
                 "stage='additional_contacts'\n"
                 "raw_data=A JSON string containing 'co_investigator_info' and 'lab_contact_info' (both are objects with the same keys as pi_info. Pass empty objects if the user has none)."
             ),
@@ -117,13 +118,17 @@ class QuestionnairePrompts:
             ),
             
             "biological_agents": (
-                "You are gathering Biological Agents data. Ask for the scientific and common names of agents. "
-                "Ask if it's indigenous. If a culture is maintained, what is its state (active, desiccated, frozen, other)? "
-                "Ask if an APHIS permit is obtained, if it's a CDC select agent, and locations of use (laboratory, greenhouse, etc.). "
+                "You are gathering Biological Agents information. Ask the user for all biological agents, toxins, or plants used in the project. "
+                "For each agent, you must determine its scientific name, common name, if it is indigenous, if an APHIS permit was obtained, "
+                "and if it is a CDC select agent. Also ask for its physical state (active, desiccated, frozen, or other) and its specific locations "
+                "(laboratory, greenhouse, growth chamber, field release). "
                 f"{base_instruction}"
-                "Once gathered, call `questionnaire_parsing` with EXACTLY: "
+                "Once gathered, call `questionnaire_parsing` with EXACTLY: \n"
                 "stage='biological_agents'\n"
-                "raw_data=A JSON object (dictionary) containing a single key 'biological_agents' whose value is a list of objects with keys: scientific_name, common_name, indigenous, agent_state (object with bools active, desiccated, frozen, and string other), aphis_permit_obtained, cdc_select_agent, laboratory_location, greenhouse_location, growth_chamber_location, field_release_location."
+                "raw_data=A JSON string containing a single root key called 'biological_agents' which contains an array of agent objects. "
+                "IMPORTANT: Each agent object MUST strictly use these exact keys: 'scientific_name', 'common_name', 'indigenous' (bool), "
+                "'aphis_permit_obtained' (bool), 'cdc_select_agent' (bool), 'laboratory_location', 'greenhouse_location', 'growth_chamber_location', 'field_release_location'. "
+                "Additionally, include an 'agent_state' object with boolean keys: 'active', 'desiccated', 'frozen', and a string key 'other'."
             ),
             
             "project_summary": (

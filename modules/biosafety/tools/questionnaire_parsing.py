@@ -35,13 +35,14 @@ class QuestionnaireParsing:
             data = json.loads(raw_data)
             next_stage = "complete"
 
-            if stage == "project_and_pi":
-                # Parse the new university and state fields
+            if stage == "project_info":
                 current_bua_state.university = data.get("university", "")
                 current_bua_state.state = data.get("state", "")
-                
                 current_bua_state.bua_number = data.get("bua_number", "")
                 current_bua_state.project_title = data.get("project_title", "")
+                next_stage = "pi_info"
+
+            elif stage == "pi_info":
                 if data.get("pi_info"):
                     current_bua_state.pi_info = ContactInfo(**data["pi_info"])
                 next_stage = "additional_contacts"
@@ -52,7 +53,7 @@ class QuestionnaireParsing:
                 if data.get("lab_contact_info"):
                     current_bua_state.lab_contact_info = ContactInfo(**data["lab_contact_info"])
                 next_stage = "personnel"
-
+            
             elif stage == "personnel":
                 # Handle if LLM passes it wrapped in a "personnel" key or directly as a list
                 pers_list = data.get("personnel", data) if isinstance(data, dict) else data

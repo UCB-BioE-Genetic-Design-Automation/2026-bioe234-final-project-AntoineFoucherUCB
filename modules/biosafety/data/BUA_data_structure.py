@@ -92,7 +92,6 @@ class BUAForm(BaseModel):
     """The master state holding all form data"""
     
     # Basic identifiers
-    # Since the university and state are often needed for regulatory context, we can make them required fields at the top level by not giving them defaults.
     university: str = Field(default="", description="The university where the BUA is being submitted")
     state: str = Field(default="", description="The US State where the university is located")
     bua_number: str = Field(default="", description="BUA Number (Office use only)")
