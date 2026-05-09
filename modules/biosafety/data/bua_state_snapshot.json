@@ -52,19 +52,19 @@
   "room_usage": [
     {
       "building": "Greenleaf Sciences Building",
-      "room_number": "104",
-      "shared_room": true,
+      "room_number": "402",
+      "shared_room": false,
       "biosafety_level": "BL1",
-      "storage": false,
+      "storage": true,
       "research": true,
       "biosafety_cabinet": true,
-      "autoclave": false,
+      "autoclave": true,
       "medical_waste": false,
       "animal": false
     },
     {
-      "building": "Greenleaf Sciences Building",
-      "room_number": "106",
+      "building": "Ag-Tech Building",
+      "room_number": "G-10",
       "shared_room": true,
       "biosafety_level": "BL1",
       "storage": false,
