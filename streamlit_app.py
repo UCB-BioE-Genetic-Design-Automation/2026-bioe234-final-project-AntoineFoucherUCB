@@ -289,6 +289,10 @@ def _render_start_screen() -> None:
     with c2:
         st.markdown("### upload file (docx)")
         st.caption("Upload an existing BUA draft and extract it into state.")
+        st.caption(
+            "In this workflow, 'extract data' means producing the raw JSON data-structure "
+            "representation of the BUA (not rendering yet)."
+        )
         if st.button("upload file (docx)", use_container_width=True):
             st.session_state.mode = "upload"
             st.rerun()
@@ -298,6 +302,73 @@ def _docx_to_text(doc_path: Path) -> str:
     try:
         doc = Document(str(doc_path))
         lines = [p.text.strip() for p in doc.paragraphs if p.text and p.text.strip()]
+
+        def _collapse_row_cells(cells: list[str]) -> list[str]:
+            """
+            Reduce repeated values from merged DOCX cells:
+            e.g. ["Project Title", "Project Title", "Project Title"] -> ["Project Title"].
+            """
+            out: list[str] = []
+            prev = None
+            for raw in cells:
+                cur = (raw or "").strip()
+                if not cur:
+                    continue
+                if prev is not None and cur == prev:
+                    continue
+                out.append(cur)
+                prev = cur
+            return out
+
+        def _compact_lines(raw_lines: list[str]) -> list[str]:
+            """
+            Keep preview readable by removing high-noise repeats from Word tables.
+            - Drop consecutive duplicate lines.
+            - For long legal/instruction lines repeated later, keep first instance.
+            - If table rows repeat the same long prompt prefix, replace prefix with
+              "(same prompt)" for subsequent rows.
+            """
+            out: list[str] = []
+            prev_norm = ""
+            long_seen: dict[str, int] = {}
+            prompt_seen: set[str] = set()
+            skipped_long = 0
+
+            for ln in raw_lines:
+                line = str(ln or "").strip()
+                if not line:
+                    continue
+                norm = " ".join(line.split())
+                if norm == prev_norm:
+                    continue
+
+                # Reduce very long repeated guidance text blocks.
+                if len(norm) > 180:
+                    seen = long_seen.get(norm, 0)
+                    if seen >= 1:
+                        skipped_long += 1
+                        continue
+                    long_seen[norm] = seen + 1
+
+                # Compress repeated prompt prefixes in pipe-joined table rows.
+                if " | " in line:
+                    parts = [p.strip() for p in line.split("|")]
+                    first = parts[0] if parts else ""
+                    if len(first) > 120:
+                        first_norm = " ".join(first.split())
+                        if first_norm in prompt_seen:
+                            parts[0] = "(same prompt)"
+                            line = " | ".join(parts)
+                        else:
+                            prompt_seen.add(first_norm)
+
+                out.append(line)
+                prev_norm = norm
+
+            if skipped_long:
+                out.append(f"... [{skipped_long} repeated long instruction lines hidden]")
+            return out
+
         for table in doc.tables:
             for row in table.rows:
                 cells = []
@@ -306,8 +377,10 @@ def _docx_to_text(doc_path: Path) -> str:
                         p.text.strip() for p in cell.paragraphs if p.text and p.text.strip()
                     ).strip()
                     cells.append(cell_text)
-                if any(cells):
-                    lines.append(" | ".join(cells))
+                collapsed = _collapse_row_cells(cells)
+                if collapsed:
+                    lines.append(" | ".join(collapsed))
+        lines = _compact_lines(lines)
         text = "\n".join(lines).strip()
         if not text:
             return "(Rendered document has no plain text paragraphs to preview.)"
@@ -507,6 +580,7 @@ def main() -> None:
                         "I have uploaded a BUA document. Here is the full text extracted from it:\n\n"
                         f"--- START OF DOCUMENT ---\n{extracted_text}\n--- END OF DOCUMENT ---\n\n"
                         "Please read this document and simply reply with: 'Document received and read. I am ready to begin extracting the data.' "
+                        "Here, 'extracting the data' means creating the raw JSON data-structure representation of this BUA. "
                         "Do NOT call any tools yet."
                     )
                     
