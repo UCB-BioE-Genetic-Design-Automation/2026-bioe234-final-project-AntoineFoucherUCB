@@ -1,9 +1,7 @@
 # BUA Automation Tool: BioE234 Final Project
 ---
-This project leverages the Model Context Protocol (MCP) framework to automate the generation and analysis of Biological Use Authorization (BUA) documents. By integrating an AI assistant with specialized bioengineering tools, this application streamlines the process of filling out complex safety templates and cross-referencing biosafety data.
----
-## Project Overview  
-The system allows users to upload existing BUA documents or answer questionnaires
+## Project Overview
+This project leverages the Model Context Protocol (MCP) framework to automate the generation and analysis of Biological Use Authorization (BUA) documents. By integrating an AI assistant with specialized bioengineering tools, this application streamlines the process of filling out complex safety templates and cross-referencing biosafety data. It allows users to upload existing BUA documents or answer questionnaires
 through a Streamlit GUI (**IMPORTANT**: the proper activation of our tools is with ‘streamlit run streamlit_app.py’ and not ‘python client_gemini.py’). The AI then processes this information to populate a structured BUA data format, performs risk analysis using external databases, and
 generates a completed `.docx` file for submission.
 ---
