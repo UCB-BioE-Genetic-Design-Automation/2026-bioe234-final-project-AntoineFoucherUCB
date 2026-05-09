@@ -1,0 +1,19 @@
+[
+  {
+    "prompt": "Translate the DNA coding sequence ATGGCTTAGCAATAA to amino acids.",
+    "expected_tool": "dna_translate",
+    "expected_args": {
+      "seq": "ATGGCTTAGCAATAA",
+      "frame": 1
+    },
+    "notes": "Starts in frame 1; stop codons appear as '*' in the returned protein string."
+  },
+  {
+    "prompt": "What is the reverse complement of ATGCATGC?",
+    "expected_tool": "dna_reverse_complement",
+    "expected_args": {
+      "seq": "ATGCATGC"
+    },
+    "notes": "Tool name comes from translate.json / reverse_complement.json execution_details.mcp_name."
+  }
+]

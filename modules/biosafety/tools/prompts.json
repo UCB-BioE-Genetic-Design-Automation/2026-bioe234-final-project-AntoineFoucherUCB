@@ -1,0 +1,60 @@
+[
+  {
+    "prompt": "I'm starting a new Biological Use Authorization. Fetch the instructions for the opening step so we can collect university, state, BUA number, and project title.",
+    "expected_tool": "questionnaire_prompts",
+    "expected_args": {
+      "stage": "start"
+    },
+    "notes": "Entry of the questionnaire — maps to prompts for gathering project_registration fields before questionnaire_parsing."
+  },
+  {
+    "prompt": "Save project header info: UC Berkeley in California, BUA pending number TBD as an empty string, project title Lentiviral knockout screen in primary T cells.",
+    "expected_tool": "questionnaire_parsing",
+    "expected_args": {
+      "stage": "project_info",
+      "raw_data": "{\"university\": \"UC Berkeley\", \"state\": \"CA\", \"bua_number\": \"\", \"project_title\": \"Lentiviral knockout screen in primary T cells\"}"
+    },
+    "notes": "canonical stage is project_info; lab_identity aliases to the same. raw_data must be a JSON string as required by the tool."
+  },
+  {
+    "prompt": "What question flow should we use once we're ready for the PI contact block?",
+    "expected_tool": "questionnaire_prompts",
+    "expected_args": {
+      "stage": "pi_info"
+    },
+    "notes": "Loads stage-specific interviewer instructions."
+  },
+  {
+    "prompt": "Record PI: Name Dr. Sam Lee, Assoc Prof, Molecular & Cell Biology, Stanley Hall room 4422, phone 510-555-0199, email slee@berkeley.edu, fax empty.",
+    "expected_tool": "questionnaire_parsing",
+    "expected_args": {
+      "stage": "pi_info",
+      "raw_data": "{\"pi_info\": {\"name\": \"Dr. Sam Lee\", \"title\": \"Associate Professor\", \"department\": \"Molecular & Cell Biology\", \"building\": \"Stanley Hall\", \"room\": \"4422\", \"phone\": \"510-555-0199\", \"email_address\": \"slee@berkeley.edu\", \"fax\": \"\"}}"
+    },
+    "notes": "Structured ContactInfo for the PI row."
+  },
+  {
+    "prompt": "The user uploaded Word BUA at C:/bioe_uploads/smith_bua_v3.docx — read it and give me Markdown so I can extract fields.",
+    "expected_tool": "doc_parsing",
+    "expected_args": {
+      "file_path": "C:/bioe_uploads/smith_bua_v3.docx"
+    },
+    "notes": "Forward slashes work on Windows and macOS/Linux; substitution path for real uploads folders is encouraged."
+  },
+  {
+    "prompt": "Run a biosafety audit on the current questionnaire state and focus specifically on biological agents and ABSA risk alignment.",
+    "expected_tool": "bua_analysis",
+    "expected_args": {
+      "focus_area": "biological agents"
+    },
+    "notes": "bua_analysis enriches agents from ABSA and returns reviewer instructions plus campus practices text."
+  },
+  {
+    "prompt": "Export the compiled BUA to Word as smith_bua_mcp_export.docx in generated_docs.",
+    "expected_tool": "bua_render",
+    "expected_args": {
+      "output_filename": "smith_bua_mcp_export.docx"
+    },
+    "notes": "Rendering uses empty_BUA.docx template and global current_bua_state (including questionnaire_parsing snapshots)."
+  }
+]

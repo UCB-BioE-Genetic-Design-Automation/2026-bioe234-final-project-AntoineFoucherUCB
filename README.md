@@ -400,7 +400,7 @@ data/
 
 ## 12. Test prompts — prompts.json
 
-You must submit a `prompts.json` file alongside your tool. Each entry is a natural-language prompt a user might type, paired with the expected tool call. See `modules/seq_basics/tools/prompts.json` for the exact format.
+You must submit a `prompts.json` file alongside your tool. Each entry is a natural-language prompt a user might type, paired with the expected tool call. See **`modules/biosafety/tools/prompts.json`** (course BUA MCP tools) and **`modules/seq_basics/tools/prompts.json`** (starter seq tools). Use the MCP tool identifiers from each tool’s `.json` wrapper (`execution_details.mcp_name` when present; otherwise `"name"`).
 
 ```json
 [
