@@ -1,6 +1,7 @@
 """Utilities like RAG markdown conversion
 """
 import os
+import re
 import logging
 from markitdown import MarkItDown
 from pathlib import Path

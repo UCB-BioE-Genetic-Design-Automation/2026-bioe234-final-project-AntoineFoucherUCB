@@ -1,4 +1,5 @@
 import os
+import re
 from pathlib import Path
 from modules.biosafety._utils import get_absa_data
 from modules.biosafety.data.BUA_data_structure import current_bua_state
