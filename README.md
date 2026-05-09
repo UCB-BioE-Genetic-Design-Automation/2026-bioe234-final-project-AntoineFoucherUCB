@@ -85,13 +85,14 @@ More information can be found in ‘functions_documentation.md’
 ---
 ## Project Structure
 Following the BioE234 MCP Starter conventions:
-* `modules/`: Contains the biology logic and tool definitions.
-* `tools/`: Python implementations and their corresponding JSON wrappers, as well as test prompts for each tool.
-* `data/`: Architecture of the BUA data structure and documentation on biosafety measures or ABSA-defined risk level for most biological agents.
-* `resources/`: template of an empty BUA form. **IMPORTANT TO NOTE**: This template was taken from the one used by Auburn University in Alabama. If one wanted to use these MCP tools for their own university, they would have to adjust the template and the code to fit the new template. 
+* `modules/biosafety/ools/`: Python implementations and their corresponding JSON wrappers, as well as test prompts for each tool.
+* `modules/biosafety/data/`: Architecture of the BUA data structure and documentation on biosafety measures or ABSA-defined risk level for most biological agents.
+* `modules/biosafety/resources/`: template of an empty BUA form. **IMPORTANT TO NOTE**: This template was taken from the one used by Auburn University in Alabama. If one wanted to use these MCP tools for their own university, they would have to adjust the template and the code to fit the new template.
+* `tests/`: Pytest suite to verify the proper tools' implementation.
 * `generated_docs/`: Output directory for completed BUA documents.
 Then there are some extra files:
-* ‘Filled_BUA_to_upload.docx’: Filled in BUA form useful for testing the ‘upload’ functionality. 
+* `Filled_BUA_to_upload.docx`: Filled in BUA form useful for testing the ‘upload’ functionality. 
+* `SKILL.md`: the tools were working well without having to fill this file. Since it is optional and increases the computation time for the LLM, we decide not to risk our functional tools and keep it empty.  
 ---
 ## Setup and Installation
 1. **Environment:** Create a virtual environment and install dependencies.
@@ -114,7 +115,7 @@ streamlit run app.py
 ### How to test the tools ?  
 In addition to the test prompts, we invite you to try the tools by yourself. Below are some helping prompts and documentation for this purpose.
 
-**Questionnaire for BUA generation**
+- **Questionnaire for BUA generation**
 Instead of writing your own prompts, you can copy and paste each prompt found below for each question that the LLM asks. The information provided in the answers below are intentionally not all right, so you can conduct a BUA analysis after finishing the questionnaire, then generate a BUA form.
 **Answer 1 (Project info)**: Yes, I'm ready to start. The BUA number is 1234. The project title is 'CRISPR-Cas9 Mediated Gene Silencing in Arabidopsis thaliana'. I am at State University in Kentucky.   
 **Answer 2 (PI Information)**: I am the PI, Dr. Aris Thorne. My title is Associate Professor in the Department of Plant Biology. You can find me in the Greenleaf Sciences Building, Room 402. My phone number is 555-0198, and my email is athorne@university.edu. I don't really use a fax machine, so you can just leave that blank.  
@@ -122,8 +123,9 @@ Instead of writing your own prompts, you can copy and paste each prompt found be
 **Answer 4 (Personnel)**: For my lab personnel, I have two graduate student researchers from Biology dept working on this. First is Mark Lewis, his phone is 555-0301. He has completed his general Biosafety training and his Medical Waste training, but he hasn't done Bloodborne Pathogens yet because we don't work with human blood in our lab. The second student is Sarah Jenkins, phone 555-0302. She just joined the lab last week, so she has only finished her Biosafety training so far. Leave their emails blank, they can be reached via phone.  
 **Answer 5 (Room Usage)**: We will primarily be using two rooms. The first is Greenleaf Sciences Room 402, which is our main lab. It's not shared with anyone else. It's a BSL-1 facility used for both research and storage. We do have a biosafety cabinet and an autoclave in there, but we don't handle medical waste or house animals. The second room is the Ag-Tech Greenhouse, Room G-10. That one is shared, also BSL-1, and used strictly for research and growing the plants. No BSC, autoclave, medical waste, or animals in there. And no, we don't need IACUC or IRB approval since we're just working with plants and bacteria.  
 **Answer 6 (Biological Agents)**: Our first biological agent is Agrobacterium tumefaciens. I guess the common name is just crown gall bacterium. It is indigenous to our state, and we maintain an active culture of it in the lab, sometimes we keep it frozen too. Since it's indigenous, we didn't need to get an APHIS permit, and it's definitely not a CDC select agent! We'll be using it in the Greenleaf 402 laboratory and then transferring the modified plants to the Ag-Tech Greenhouse. The second biological agent is  Escherichia coli. The common name is just E. coli. It is highly indigenous—found practically everywhere—so we obviously don't need an APHIS permit for it, and it is definitely not a CDC select agent. We mostly maintain it as an active liquid culture, though we have frozen glycerol stocks as well. We will be doing the primary handling in the Molecular Bio Lab 104, and the cultures will be grown overnight in the shared Incubator Room 106.  
-**Answer 7 (Project Summary)**: The project goal is to develop drought-resistant crop strains. Our experimental procedure involves transforming Arabidopsis plants using our Agrobacterium cultures via the floral dip method. For containment, we use standard BSL-1 practices, though we prep the bacterial cultures inside the biosafety cabinet. We wear standard lab coats, safety glasses, and nitrile gloves but no shoes. When moving plants to the greenhouse, we transport them in sealed, shatterproof secondary plastic bins. For decontamination, we use methanol and ingest it directly. If there's a spill, our procedure is to cover it with paper towels, soak it in 10% bleach, wait 20 minutes, and then wipe it up while wearing our PPE.  
-**BUA upload**
+**Answer 7 (Project Summary)**: The project goal is to develop drought-resistant crop strains. Our experimental procedure involves transforming Arabidopsis plants using our Agrobacterium cultures via the floral dip method. For containment, we use standard BSL-1 practices, though we prep the bacterial cultures inside the biosafety cabinet. We wear standard lab coats, safety glasses, and nitrile gloves but no shoes. When moving plants to the greenhouse, we transport them in sealed, shatterproof secondary plastic bins. For decontamination, we use methanol and ingest it directly. If there's a spill, our procedure is to cover it with paper towels, soak it in 10% bleach, wait 20 minutes, and then wipe it up while wearing our PPE.
+</br></br>    
+- **BUA upload**  
 In the repository’s main body is a file called “Filled_BUA_to_upload.docx”.You can upload this document in the streamlit app. This document also intentionally presents some biological errors, so you can ask the LLM to perform an analysis and render a corrected BUA form.
 
 

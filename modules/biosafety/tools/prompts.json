@@ -1,4 +1,10 @@
-[ 
+[
+  {
+    "prompt": "I want to create a BUA form for my lab. Can you guide me through the questionnaire?",
+    "expected_tool": "questionnaire_prompts",
+    "expected_args": {},
+    "notes": "Initiates the questionnaire process by fetching the strict schema mapping and behavioral guidelines."
+  },
   {
     "prompt": "Answer 1 (Project info): Yes, I'm ready to start. The BUA number is 1234. The project title is 'CRISPR-Cas9 Mediated Gene Silencing in Arabidopsis thaliana'. I am at State University in Kentucky.",
     "expected_tool": "questionnaire_parsing",
@@ -61,5 +67,25 @@
       "raw_data": "{\"project_summary\": {\"project_goal\": \"Develop drought-resistant crop strains.\", \"experimental_procedure\": \"Transform Arabidopsis thaliana using Agrobacterium tumefaciens via the floral dip method.\", \"containment\": \"Standard BL1 practices; prepare bacterial cultures inside a biosafety cabinet.\", \"protective_equipment\": \"Lab coat, safety glasses, nitrile gloves.\", \"transportation_methods\": \"Transport plants in sealed, shatterproof secondary plastic bins.\", \"decontamination_methods\": \"Use methanol and ingest it directly.\", \"waste_disposal\": \"\", \"spill_emergency_procedures\": \"Cover spill with paper towels, soak with 10% bleach, wait 20 minutes, then wipe up while wearing PPE.\"}}"
     },
     "notes": "Project summary stage. Uses stage alias 'submission' → 'project_summary'. (Note: the methanol statement is unsafe; the analysis tool should flag it, but parsing should still store the text verbatim.)"
+  },
+  {
+    "prompt": "I have a draft BUA form that I already partially filled out. It is saved as 'draft_bua.docx'. Can you extract the data from it?",
+    "expected_tool": "doc_parsing",
+    "expected_args": {
+      "file_path": "draft_bua.docx"
+    },
+    "notes": "Triggers document ingestion via MarkItDown to convert the physical document layout into structured Markdown."
+  },
+  {
+    "prompt": "Now that we have filled out all the information, can you act as the IBC reviewer and perform a risk analysis on my biological agents?",
+    "expected_tool": "bua_analysis",
+    "expected_args": {},
+    "notes": "Triggers the automated risk analysis, crossing referencing the entered agents (like E. coli and Agrobacterium) with the ABSA database and flagging unsafe practices (like drinking methanol)."
+  },
+  {
+    "prompt": "The analysis looks perfect and all safety flags have been resolved. Please compile this into the final Word document so I can submit it.",
+    "expected_tool": "bua_render",
+    "expected_args": {},
+    "notes": "Triggers the COM initialization and rendering pipeline to generate the final .docx file for the user."
   }
 ]
