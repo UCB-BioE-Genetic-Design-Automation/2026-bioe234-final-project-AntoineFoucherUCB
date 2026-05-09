@@ -122,6 +122,9 @@ def _load_tool_library() -> list[dict[str, str]]:
             data = json.loads(p.read_text(encoding="utf-8"))
         except Exception:
             continue
+        # `prompts.json` and other helper files are arrays; tool wrappers are dicts.
+        if not isinstance(data, dict):
+            continue
         name = str(data.get("name", p.stem))
         desc = str(data.get("description", "")).strip()
         rows.append({"name": name, "description": desc})

@@ -1,8 +1,8 @@
 {
-  "university": "State University",
-  "state": "Kentucky",
-  "bua_number": "1234",
-  "project_title": "CRISPR-Cas9 Mediated Gene Silencing in Arabidopsis thaliana",
+  "university": "UC Berkeley",
+  "state": "California",
+  "bua_number": "",
+  "project_title": "Lentiviral knockout screen in primary T cells",
   "pi_info": {
     "name": "Dr. Aris Thorne",
     "title": "Associate Professor",
@@ -56,9 +56,9 @@
       "shared_room": false,
       "biosafety_level": "BL1",
       "storage": true,
-      "research": false,
-      "biosafety_cabinet": false,
-      "autoclave": false,
+      "research": true,
+      "biosafety_cabinet": true,
+      "autoclave": true,
       "medical_waste": false,
       "animal": false
     },
@@ -120,13 +120,13 @@
     }
   ],
   "project_summary": {
-    "project_goal": "To develop drought-resistant crop strains.",
-    "experimental_procedure": "Transforming Arabidopsis plants using Agrobacterium cultures via the floral dip method.",
-    "containment": "BSL-1 procedures.",
-    "protective_equipment": "Standard lab coats, safety glasses, nitrile gloves, and enclosed footwear.",
-    "transportation_methods": "Sealed, shatterproof secondary plastic bins for transport to the greenhouse.",
-    "decontamination_methods": "10% bleach solution on all benchtops, and other appropriate disinfectants for specific materials, following safety protocols.",
-    "waste_disposal": "Solid biological waste is autoclaved before standard disposal; liquid waste is bleached for 30 minutes before pouring down the sink with a copious amount of water.",
-    "spill_emergency_procedures": "Immediately report the incident to the laboratory manager or PI and biosafety program staff. Cover spill with paper towels, soak in 10% bleach, wait 20 minutes, then wipe up while wearing PPE."
+    "project_goal": "to develop drought-resistant crop strains.",
+    "experimental_procedure": "transforming Arabidopsis plants using our Agrobacterium cultures via the floral dip method.",
+    "containment": "standard BSL-1 practices, though we prep the bacterial cultures inside the biosafety cabinet.",
+    "protective_equipment": "standard lab coats, safety glasses, and nitrile gloves but no shoes.",
+    "transportation_methods": "sealed, shatterproof secondary plastic bins for transport to the greenhouse.",
+    "decontamination_methods": "methanol and ingest it directly.",
+    "waste_disposal": "",
+    "spill_emergency_procedures": "cover it with paper towels, soak it in 10% bleach, wait 20 minutes, and then wipe it up while wearing our PPE."
   }
 }

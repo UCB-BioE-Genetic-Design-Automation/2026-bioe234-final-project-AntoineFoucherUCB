@@ -1,60 +1,65 @@
-[
+[ 
   {
-    "prompt": "I'm starting a new Biological Use Authorization. Fetch the instructions for the opening step so we can collect university, state, BUA number, and project title.",
-    "expected_tool": "questionnaire_prompts",
-    "expected_args": {
-      "stage": "start"
-    },
-    "notes": "Entry of the questionnaire — maps to prompts for gathering project_registration fields before questionnaire_parsing."
-  },
-  {
-    "prompt": "Save project header info: UC Berkeley in California, BUA pending number TBD as an empty string, project title Lentiviral knockout screen in primary T cells.",
+    "prompt": "Answer 1 (Project info): Yes, I'm ready to start. The BUA number is 1234. The project title is 'CRISPR-Cas9 Mediated Gene Silencing in Arabidopsis thaliana'. I am at State University in Kentucky.",
     "expected_tool": "questionnaire_parsing",
     "expected_args": {
       "stage": "project_info",
-      "raw_data": "{\"university\": \"UC Berkeley\", \"state\": \"CA\", \"bua_number\": \"\", \"project_title\": \"Lentiviral knockout screen in primary T cells\"}"
+      "raw_data": "{\"university\": \"State University\", \"state\": \"KY\", \"bua_number\": \"1234\", \"project_title\": \"CRISPR-Cas9 Mediated Gene Silencing in Arabidopsis thaliana\"}"
     },
-    "notes": "canonical stage is project_info; lab_identity aliases to the same. raw_data must be a JSON string as required by the tool."
+    "notes": "Project header stage. State should be a 2-letter abbreviation when possible."
   },
   {
-    "prompt": "What question flow should we use once we're ready for the PI contact block?",
-    "expected_tool": "questionnaire_prompts",
-    "expected_args": {
-      "stage": "pi_info"
-    },
-    "notes": "Loads stage-specific interviewer instructions."
-  },
-  {
-    "prompt": "Record PI: Name Dr. Sam Lee, Assoc Prof, Molecular & Cell Biology, Stanley Hall room 4422, phone 510-555-0199, email slee@berkeley.edu, fax empty.",
+    "prompt": "Answer 2 (PI Information): I am the PI, Dr. Aris Thorne. My title is Associate Professor in the Department of Plant Biology. You can find me in the Greenleaf Sciences Building, Room 402. My phone number is 555-0198, and my email is athorne@university.edu. I don't really use a fax machine, so you can just leave that blank.",
     "expected_tool": "questionnaire_parsing",
     "expected_args": {
       "stage": "pi_info",
-      "raw_data": "{\"pi_info\": {\"name\": \"Dr. Sam Lee\", \"title\": \"Associate Professor\", \"department\": \"Molecular & Cell Biology\", \"building\": \"Stanley Hall\", \"room\": \"4422\", \"phone\": \"510-555-0199\", \"email_address\": \"slee@berkeley.edu\", \"fax\": \"\"}}"
+      "raw_data": "{\"pi_info\": {\"name\": \"Dr. Aris Thorne\", \"title\": \"Associate Professor\", \"department\": \"Plant Biology\", \"building\": \"Greenleaf Sciences Building\", \"room\": \"402\", \"phone\": \"555-0198\", \"email_address\": \"athorne@university.edu\", \"fax\": \"\"}}"
     },
-    "notes": "Structured ContactInfo for the PI row."
+    "notes": "PI contact row. Fax left empty when user says they don't use it."
   },
   {
-    "prompt": "The user uploaded Word BUA at C:/bioe_uploads/smith_bua_v3.docx — read it and give me Markdown so I can extract fields.",
-    "expected_tool": "doc_parsing",
+    "prompt": "Answer 3 (Additional Contacts): Yes, I have a Co-Investigator on this project. Her name is Dr. Elena Rostova, and she's a Research Scientist also in the Plant Biology department. She's located over in the Ag-Tech Building, Room 115. Her phone is 555-0234 and her email is erostova@university.edu. I serve as both the lab contact and PI, so you can put my information.",
+    "expected_tool": "questionnaire_parsing",
     "expected_args": {
-      "file_path": "C:/bioe_uploads/smith_bua_v3.docx"
+      "stage": "additional_contacts",
+      "raw_data": "{\"co_investigator_info\": {\"name\": \"Dr. Elena Rostova\", \"title\": \"Research Scientist\", \"department\": \"Plant Biology\", \"building\": \"Ag-Tech Building\", \"room\": \"115\", \"phone\": \"555-0234\", \"email_address\": \"erostova@university.edu\", \"fax\": \"\"}, \"lab_contact_info\": {\"name\": \"Dr. Aris Thorne\", \"title\": \"Associate Professor\", \"department\": \"Plant Biology\", \"building\": \"Greenleaf Sciences Building\", \"room\": \"402\", \"phone\": \"555-0198\", \"email_address\": \"athorne@university.edu\", \"fax\": \"\"}}"
     },
-    "notes": "Forward slashes work on Windows and macOS/Linux; substitution path for real uploads folders is encouraged."
+    "notes": "Additional contacts stage. Lab contact explicitly same as PI here, so duplicate PI info into lab_contact_info."
   },
   {
-    "prompt": "Run a biosafety audit on the current questionnaire state and focus specifically on biological agents and ABSA risk alignment.",
-    "expected_tool": "bua_analysis",
+    "prompt": "Answer 4 (Personnel): For my lab personnel, I have two graduate student researchers from Biology dept working on this. First is Mark Lewis, his phone is 555-0301. He has completed his general Biosafety training and his Medical Waste training, but he hasn't done Bloodborne Pathogens yet. The second student is Sarah Jenkins, phone 555-0302. She just joined the lab last week, so she has only finished her Biosafety training so far. Leave their emails blank, they can be reached via phone.",
+    "expected_tool": "questionnaire_parsing",
     "expected_args": {
-      "focus_area": "biological agents"
+      "stage": "personnel",
+      "raw_data": "{\"personnel\": [{\"name\": \"Mark Lewis\", \"phone\": \"555-0301\", \"biosafety_training\": true, \"bloodborne_pathogens_training\": false, \"medical_waste_training\": true}, {\"name\": \"Sarah Jenkins\", \"phone\": \"555-0302\", \"biosafety_training\": true, \"bloodborne_pathogens_training\": false, \"medical_waste_training\": false}]}"
     },
-    "notes": "bua_analysis enriches agents from ABSA and returns reviewer instructions plus campus practices text."
+    "notes": "Personnel stage. Department/emails aren’t fields on Personnel; only name/phone + training booleans are stored."
   },
   {
-    "prompt": "Export the compiled BUA to Word as smith_bua_mcp_export.docx in generated_docs.",
-    "expected_tool": "bua_render",
+    "prompt": "Answer 5 (Room Usage): We will primarily be using two rooms. The first is Greenleaf Sciences Room 402, which is our main lab. It's not shared. It's a BSL-1 facility used for both research and storage. We do have a biosafety cabinet and an autoclave in there. The second room is the Ag-Tech Greenhouse, Room G-10. That one is shared, also BSL-1, and used strictly for research and growing the plants. No BSC, autoclave. And no, we don't need IACUC or IRB approval.",
+    "expected_tool": "questionnaire_parsing",
     "expected_args": {
-      "output_filename": "smith_bua_mcp_export.docx"
+      "stage": "room_usage",
+      "raw_data": "{\"irb_approval_sought\": false, \"iacuc_approval_sought\": false, \"room_usage\": [{\"building\": \"Greenleaf Sciences\", \"room_number\": \"402\", \"shared_room\": false, \"biosafety_level\": \"BL1\", \"storage\": true, \"research\": true, \"biosafety_cabinet\": true, \"autoclave\": true, \"medical_waste\": false, \"animal\": false}, {\"building\": \"Ag-Tech Greenhouse\", \"room_number\": \"G-10\", \"shared_room\": true, \"biosafety_level\": \"BL1\", \"storage\": false, \"research\": true, \"biosafety_cabinet\": false, \"autoclave\": false, \"medical_waste\": false, \"animal\": false}]}"
     },
-    "notes": "Rendering uses empty_BUA.docx template and global current_bua_state (including questionnaire_parsing snapshots)."
+    "notes": "Room usage stage. Use BL1/BL2/BL3 (the tool also normalizes plain '1'/'2'/'3' → 'BL1'...)."
+  },
+  {
+    "prompt": "Answer 6 (Biological Agents): Our first biological agent is Agrobacterium tumefaciens (crown gall bacterium). It is indigenous. We maintain an active culture and sometimes keep it frozen. Not a select agent. We'll use it in Greenleaf 402 lab and transfer modified plants to the Ag-Tech Greenhouse. The second agent is Escherichia coli (E. coli). Indigenous, no APHIS permit, not a select agent. Active liquid culture plus frozen glycerol stocks. Primary handling in Molecular Bio Lab 104 and grown overnight in shared Incubator Room 106.",
+    "expected_tool": "questionnaire_parsing",
+    "expected_args": {
+      "stage": "biological_agents",
+      "raw_data": "{\"biological_agents\": [{\"scientific_name\": \"Agrobacterium tumefaciens\", \"common_name\": \"Crown gall bacterium\", \"indigenous\": true, \"agent_state\": {\"active\": true, \"desiccated\": false, \"frozen\": true, \"other\": \"\"}, \"aphis_permit_obtained\": false, \"cdc_select_agent\": false, \"laboratory_location\": \"Greenleaf Sciences 402\", \"greenhouse_location\": \"Ag-Tech Greenhouse G-10\", \"growth_chamber_location\": \"\", \"field_release_location\": \"\"}, {\"scientific_name\": \"Escherichia coli\", \"common_name\": \"E. coli\", \"indigenous\": true, \"agent_state\": {\"active\": true, \"desiccated\": false, \"frozen\": true, \"other\": \"\"}, \"aphis_permit_obtained\": false, \"cdc_select_agent\": false, \"laboratory_location\": \"Molecular Bio Lab 104\", \"greenhouse_location\": \"\", \"growth_chamber_location\": \"Incubator Room 106\", \"field_release_location\": \"\"}]}"
+    },
+    "notes": "Agents stage. Each agent must include the agent_state object and location fields (empty strings allowed)."
+  },
+  {
+    "prompt": "Answer 7 (Project Summary): The project goal is to develop drought-resistant crop strains. Procedure: transform Arabidopsis using Agrobacterium via floral dip. Containment: standard BSL-1; prep bacterial cultures in BSC. PPE: lab coats, safety glasses, nitrile gloves; no shoes. Transport: sealed secondary plastic bins to greenhouse. Decontamination: we use methanol and ingest it directly. Spill response: paper towels + 10% bleach for 20 min then wipe while wearing PPE.",
+    "expected_tool": "questionnaire_parsing",
+    "expected_args": {
+      "stage": "submission",
+      "raw_data": "{\"project_summary\": {\"project_goal\": \"Develop drought-resistant crop strains.\", \"experimental_procedure\": \"Transform Arabidopsis thaliana using Agrobacterium tumefaciens via the floral dip method.\", \"containment\": \"Standard BL1 practices; prepare bacterial cultures inside a biosafety cabinet.\", \"protective_equipment\": \"Lab coat, safety glasses, nitrile gloves.\", \"transportation_methods\": \"Transport plants in sealed, shatterproof secondary plastic bins.\", \"decontamination_methods\": \"Use methanol and ingest it directly.\", \"waste_disposal\": \"\", \"spill_emergency_procedures\": \"Cover spill with paper towels, soak with 10% bleach, wait 20 minutes, then wipe up while wearing PPE.\"}}"
+    },
+    "notes": "Project summary stage. Uses stage alias 'submission' → 'project_summary'. (Note: the methanol statement is unsafe; the analysis tool should flag it, but parsing should still store the text verbatim.)"
   }
 ]
