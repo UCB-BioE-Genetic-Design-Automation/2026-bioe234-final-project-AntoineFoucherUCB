@@ -1,28 +1,28 @@
 {
-  "id": "org.c9.function.biosafety.bua.doc_analysis",
+  "id": "org.c9.function.biosafety.bua.bua_analysis",
   "name": "bua_analysis",
-  "description": "Fetches the current global BUA Data Structure and instructs the LLM to analyze it for misinformation, safety inconsistencies, or missing compliance data.",
+  "description": "Retrieves the current BUA state and standard campus biosafety practices, then passes both to the LLM to perform a compliance check and generate a Biosafety Audit Report.",
   "type": "function",
   "keywords": [
     "biosafety",
     "bua",
     "analysis",
     "compliance",
-    "review",
-    "misinformation",
-    "audit"
+    "ibc",
+    "audit",
+    "practices"
   ],
   "inputs": [
     {
       "name": "focus_area",
       "type": "string",
-      "description": "Specify 'all' for a full review, or a specific section like 'strains' or 'personnel' to focus the analysis."
+      "description": "Specific area of the BUA to focus the analysis on (e.g., 'personnel training', 'biological agents', 'all'). Defaults to 'all'."
     }
   ],
   "outputs": [
     {
       "type": "object",
-      "description": "Returns the current BUA form data and strict instructions for the LLM on how to generate the compliance report."
+      "description": "A dictionary containing the 'status', specific LLM 'instructions', 'campus_biosafety_practices' text, and 'current_bua_data'."
     }
   ],
   "examples": [
@@ -32,14 +32,23 @@
       },
       "output": {
         "status": "success",
-        "instructions": "Analyze the attached data...",
-        "current_bua_data": {}
+        "instructions": "You are an expert Institutional Biosafety Committee (IBC) reviewer...",
+        "campus_biosafety_practices": "Common Biosafety Practices:\nGeneral lab protocol...",
+        "current_bua_data": {
+          "university": "UC Berkeley",
+          "biological_agents": [
+            {
+              "scientific_name": "Agrobacterium tumefaciens",
+              "absa_risk_group": "Risk Group 1"
+            }
+          ]
+        }
       }
     }
   ],
   "execution_details": {
     "language": "python",
-    "source": "modules/biosafety/tools/doc_analysis.py",
+    "source": "modules/biosafety/tools/bua_analysis.py",
     "initialization": "initiate",
     "execution": "run"
   }
